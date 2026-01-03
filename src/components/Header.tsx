@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import ThemeToggle from "./ThemeToggle";
 import AdvancedSearch from "./AdvancedSearch";
 import NotificationBell from "./NotificationBell";
 
 export default function Header() {
+    const { data: session, status } = useSession();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -22,8 +24,8 @@ export default function Header() {
         { name: "خدمات", href: "/categories/services", icon: "🔧" },
     ];
 
-    // Mock logged in state (change to true to see logged-in UI)
-    const isLoggedIn = true;
+    const isLoggedIn = status === "authenticated";
+    const isLoading = status === "loading";
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -36,11 +38,16 @@ export default function Header() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
-        // In a real app, this would clear auth tokens, session, etc.
-        alert("تم تسجيل الخروج بنجاح");
-        // window.location.href = "/";
+    const handleLogout = async () => {
         setIsProfileOpen(false);
+        await signOut({ callbackUrl: "/" });
+    };
+
+    const getUserInitial = () => {
+        if (session?.user?.name) {
+            return session.user.name.charAt(0);
+        }
+        return "م";
     };
 
     return (
@@ -68,7 +75,9 @@ export default function Header() {
                         {/* Theme Toggle */}
                         <ThemeToggle />
 
-                        {isLoggedIn ? (
+                        {isLoading ? (
+                            <div className="w-24 h-8 bg-[var(--background-secondary)] rounded-lg animate-pulse"></div>
+                        ) : isLoggedIn ? (
                             <>
                                 {/* Messages */}
                                 <Link href="/messages" className="relative p-2 hover:bg-[var(--background-secondary)] rounded-lg">
@@ -88,9 +97,9 @@ export default function Header() {
                                         className="flex items-center gap-2 p-1 pr-3 rounded-lg hover:bg-[var(--background-secondary)]"
                                     >
                                         <div className="w-8 h-8 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-bold text-sm">
-                                            أ
+                                            {getUserInitial()}
                                         </div>
-                                        <span className="text-sm font-medium">حسابي</span>
+                                        <span className="text-sm font-medium">{session?.user?.name || "حسابي"}</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isProfileOpen ? 'rotate-180' : ''}`}>
                                             <path d="m6 9 6 6 6-6" />
                                         </svg>
@@ -290,4 +299,3 @@ export default function Header() {
         </header>
     );
 }
-

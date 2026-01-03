@@ -2,11 +2,76 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdListItem from "@/components/AdListItem";
-import { categories, sampleAds, formatNumber, saudiCities } from "@/lib/data";
+import { categories, formatNumber, saudiCities } from "@/lib/data";
+import prisma from "@/lib/db";
 
-export default function Home() {
-  const featuredAds = sampleAds.filter((ad) => ad.featured);
-  const recentAds = sampleAds;
+async function getAds() {
+  try {
+    const ads = await prisma.ad.findMany({
+      where: { status: "active" },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      include: {
+        user: {
+          select: {
+            name: true,
+            phone: true,
+          }
+        },
+        category: {
+          select: {
+            name: true,
+            slug: true,
+          }
+        },
+        images: {
+          take: 1,
+          orderBy: { displayOrder: "asc" }
+        }
+      }
+    });
+    return ads;
+  } catch (error) {
+    console.error("Error fetching ads:", error);
+    return [];
+  }
+}
+
+async function getFeaturedAds() {
+  try {
+    const ads = await prisma.ad.findMany({
+      where: {
+        status: "active",
+        isFeatured: true
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: {
+        user: {
+          select: {
+            name: true,
+          }
+        },
+        category: {
+          select: {
+            name: true,
+            slug: true,
+          }
+        },
+      }
+    });
+    return ads;
+  } catch (error) {
+    console.error("Error fetching featured ads:", error);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const [recentAds, featuredAds] = await Promise.all([
+    getAds(),
+    getFeaturedAds()
+  ]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,7 +120,7 @@ export default function Home() {
               {/* Stats */}
               <div className="flex flex-wrap justify-center gap-8 mt-8 text-sm">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">+50,000</div>
+                  <div className="text-2xl font-bold">+{recentAds.length > 0 ? recentAds.length : 50},000</div>
                   <div className="text-white/80">إعلان نشط</div>
                 </div>
                 <div className="text-center">
@@ -63,7 +128,7 @@ export default function Home() {
                   <div className="text-white/80">مستخدم</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">+8</div>
+                  <div className="text-2xl font-bold">+{categories.length}</div>
                   <div className="text-white/80">أقسام</div>
                 </div>
               </div>
@@ -149,13 +214,13 @@ export default function Home() {
                     key={ad.id}
                     id={ad.id}
                     title={ad.title}
-                    price={ad.price}
-                    location={ad.location}
-                    date={ad.date}
-                    category={ad.category}
-                    featured={ad.featured}
-                    views={ad.views}
-                    commentsCount={3}
+                    price={Number(ad.price)}
+                    location={ad.city}
+                    date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
+                    category={ad.category.name}
+                    featured={ad.isFeatured}
+                    views={ad.viewsCount}
+                    commentsCount={ad.messagesCount}
                   />
                 ))}
               </div>
@@ -174,28 +239,41 @@ export default function Home() {
             </div>
 
             <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
-              {recentAds.map((ad) => (
-                <AdListItem
-                  key={ad.id}
-                  id={ad.id}
-                  title={ad.title}
-                  price={ad.price}
-                  location={ad.location}
-                  date={ad.date}
-                  category={ad.category}
-                  featured={ad.featured}
-                  views={ad.views}
-                  commentsCount={Math.floor(Math.random() * 10)}
-                />
-              ))}
+              {recentAds.length > 0 ? (
+                recentAds.map((ad) => (
+                  <AdListItem
+                    key={ad.id}
+                    id={ad.id}
+                    title={ad.title}
+                    price={Number(ad.price)}
+                    location={ad.city}
+                    date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
+                    category={ad.category.name}
+                    featured={ad.isFeatured}
+                    views={ad.viewsCount}
+                    commentsCount={ad.messagesCount}
+                  />
+                ))
+              ) : (
+                <div className="p-8 text-center">
+                  <div className="text-4xl mb-4">📝</div>
+                  <h3 className="font-bold text-lg mb-2">لا توجد إعلانات حالياً</h3>
+                  <p className="text-[var(--foreground-muted)] mb-4">كن أول من يضيف إعلان!</p>
+                  <Link href="/ads/new" className="btn btn-primary">
+                    أضف إعلانك الآن
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Load More */}
-            <div className="text-center mt-6">
-              <button className="btn btn-secondary">
-                تحميل المزيد من الإعلانات
-              </button>
-            </div>
+            {recentAds.length > 0 && (
+              <div className="text-center mt-6">
+                <Link href="/ads" className="btn btn-secondary">
+                  تحميل المزيد من الإعلانات
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 
