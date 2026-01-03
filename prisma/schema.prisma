@@ -52,6 +52,8 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   adViews       AdView[]
   verifications UserVerification[]
+  givenRatings  Rating[] @relation("RaterRatings")
+  receivedRatings Rating[] @relation("RatedRatings")
   
   // NextAuth
   accounts      Account[]
@@ -326,4 +328,24 @@ model Message {
   @@index([adId])
   @@index([senderId])
   @@index([receiverId])
+}
+
+// ============================================================
+// RATING MODEL
+// ============================================================
+
+model Rating {
+  id        String   @id @default(cuid())
+  raterId   String
+  ratedId   String
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  rater     User     @relation("RaterRatings", fields: [raterId], references: [id], onDelete: Cascade)
+  rated     User     @relation("RatedRatings", fields: [ratedId], references: [id], onDelete: Cascade)
+
+  @@unique([raterId, ratedId])
+  @@index([ratedId])
 }
