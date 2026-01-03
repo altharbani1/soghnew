@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { formatPrice } from "@/lib/data";
@@ -22,6 +24,7 @@ interface Ad {
     viewsCount: number;
     isFeatured: boolean;
     createdAt: string;
+    userId: string;
     category: {
         name: string;
         slug: string;
@@ -44,11 +47,14 @@ interface Ad {
 
 export default function AdDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
+    const { data: session } = useSession();
+    const router = useRouter();
     const [ad, setAd] = useState<Ad | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [selectedImage, setSelectedImage] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         async function fetchAd() {
@@ -69,6 +75,42 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
 
         fetchAd();
     }, [resolvedParams.id]);
+
+    const handleDelete = async () => {
+        if (!confirm("هل أنت متأكد من حذف هذا الإعلان؟")) return;
+
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/ads/${ad?.id}`, { method: "DELETE" });
+            if (res.ok) {
+                alert("تم حذف الإعلان بنجاح");
+                router.push("/profile");
+            } else {
+                alert("حدث خطأ أثناء حذف الإعلان");
+            }
+        } catch (error) {
+            alert("حدث خطأ أثناء حذف الإعلان");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleRefresh = async () => {
+        // Refresh ad (bump to top)
+        try {
+            const res = await fetch(`/api/ads/${ad?.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...ad })
+            });
+            if (res.ok) {
+                alert("تم تحديث الإعلان بنجاح");
+                window.location.reload();
+            }
+        } catch (error) {
+            alert("حدث خطأ أثناء تحديث الإعلان");
+        }
+    };
 
     if (loading) {
         return (
@@ -104,9 +146,11 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
         );
     }
 
+    const isOwner = session?.user?.id === ad.userId;
+
     const images = ad.images?.length > 0
         ? ad.images.map(img => img.imageUrl)
-        : ["https://via.placeholder.com/800x600?text=لا+توجد+صورة"];
+        : [];
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -131,7 +175,7 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Ad Info Card */}
+                            {/* Ad Info Card - Details First */}
                             <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] overflow-hidden">
                                 {/* Title & Meta */}
                                 <div className="p-6 border-b border-[var(--border)]">
@@ -146,68 +190,90 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--foreground-muted)]">
                                         <span className="badge badge-primary">{ad.category.name}</span>
                                         <span className="flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                                <circle cx="12" cy="10" r="3" />
-                                            </svg>
-                                            {ad.district ? `${ad.district}، ${ad.city}` : ad.city}
+                                            📍 {ad.district ? `${ad.district}، ${ad.city}` : ad.city}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <polyline points="12 6 12 12 16 14" />
-                                            </svg>
-                                            {formatDate(ad.createdAt)}
+                                            🕐 {formatDate(ad.createdAt)}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </svg>
-                                            {ad.viewsCount} مشاهدة
+                                            👁️ {ad.viewsCount} مشاهدة
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Image Gallery */}
+                                {/* Description - Before Images */}
                                 <div className="p-6 border-b border-[var(--border)]">
-                                    {/* Main Image */}
-                                    <div className="relative aspect-video rounded-xl overflow-hidden bg-[var(--background-secondary)] mb-4">
-                                        <Image
-                                            src={images[selectedImage]}
-                                            alt={ad.title}
-                                            fill
-                                            className="object-cover"
-                                            priority
-                                        />
-                                    </div>
-                                    {/* Thumbnails */}
-                                    {images.length > 1 && (
-                                        <div className="flex gap-2 overflow-x-auto pb-2">
-                                            {images.map((img, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() => setSelectedImage(idx)}
-                                                    className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${selectedImage === idx
-                                                        ? "border-[var(--primary)]"
-                                                        : "border-transparent opacity-70 hover:opacity-100"
-                                                        }`}
-                                                >
-                                                    <Image src={img} alt="" fill className="object-cover" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Description */}
-                                <div className="p-6">
                                     <h2 className="font-bold text-lg mb-3">تفاصيل الإعلان</h2>
                                     <p className="text-[var(--foreground-muted)] leading-relaxed whitespace-pre-line">
-                                        {ad.description}
+                                        {ad.description || "لا يوجد وصف لهذا الإعلان"}
                                     </p>
                                 </div>
+
+                                {/* Image Gallery - After Description */}
+                                {images.length > 0 && (
+                                    <div className="p-6">
+                                        <h2 className="font-bold text-lg mb-3">صور الإعلان</h2>
+                                        {/* Main Image */}
+                                        <div className="relative aspect-video rounded-xl overflow-hidden bg-[var(--background-secondary)] mb-4">
+                                            <img
+                                                src={images[selectedImage]}
+                                                alt={ad.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        {/* Thumbnails */}
+                                        {images.length > 1 && (
+                                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                                {images.map((img, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => setSelectedImage(idx)}
+                                                        className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${selectedImage === idx
+                                                            ? "border-[var(--primary)]"
+                                                            : "border-transparent opacity-70 hover:opacity-100"
+                                                            }`}
+                                                    >
+                                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* No Images Message */}
+                                {images.length === 0 && (
+                                    <div className="p-6 text-center">
+                                        <div className="text-4xl mb-2">📷</div>
+                                        <p className="text-[var(--foreground-muted)]">لا توجد صور لهذا الإعلان</p>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Owner Actions - At the End */}
+                            {isOwner && (
+                                <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] p-6">
+                                    <h2 className="font-bold text-lg mb-4">إدارة الإعلان</h2>
+                                    <div className="flex flex-wrap gap-3">
+                                        <button
+                                            onClick={handleRefresh}
+                                            className="btn btn-secondary flex-1"
+                                        >
+                                            🔄 تحديث الإعلان
+                                        </button>
+                                        <button
+                                            onClick={handleDelete}
+                                            disabled={isDeleting}
+                                            className="btn bg-[var(--error)] text-white hover:opacity-80 flex-1 disabled:opacity-50"
+                                        >
+                                            {isDeleting ? "جاري الحذف..." : "🗑️ حذف الإعلان"}
+                                        </button>
+                                    </div>
+                                    <p className="text-sm text-[var(--foreground-muted)] mt-3">
+                                        هذه الخيارات متاحة لك فقط كصاحب الإعلان
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Sidebar */}
@@ -229,29 +295,20 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
                                         href={`tel:${ad.contactPhone}`}
                                         className="btn btn-primary w-full"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                        </svg>
-                                        اتصال ({ad.contactPhone})
+                                        📞 اتصال ({ad.contactPhone})
                                     </a>
                                     <a
                                         href={`https://wa.me/966${ad.contactPhone.slice(1)}`}
                                         target="_blank"
                                         className="btn btn-secondary w-full bg-[#25D366]/10 text-[#25D366] border-[#25D366]/30 hover:bg-[#25D366]/20"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z" />
-                                        </svg>
-                                        واتساب
+                                        💬 واتساب
                                     </a>
                                     <button
                                         onClick={() => setIsFavorite(!isFavorite)}
                                         className={`btn w-full ${isFavorite ? 'btn-primary' : 'btn-secondary'}`}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                                        </svg>
-                                        {isFavorite ? "تم الحفظ" : "حفظ في المفضلة"}
+                                        {isFavorite ? "❤️ تم الحفظ" : "🤍 حفظ في المفضلة"}
                                     </button>
                                 </div>
 
