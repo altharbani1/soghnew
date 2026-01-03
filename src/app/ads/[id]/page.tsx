@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { formatPrice } from "@/lib/data";
+import { RatingModal, RatingDisplay } from "@/components/RatingModal";
 import { use } from "react";
 
 interface Ad {
@@ -55,6 +56,7 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
     const [selectedImage, setSelectedImage] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     useEffect(() => {
         async function fetchAd() {
@@ -198,6 +200,9 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
                                         <span className="flex items-center gap-1">
                                             👁️ {ad.viewsCount} مشاهدة
                                         </span>
+                                        <span className="flex items-center gap-1 bg-[var(--primary)]/10 text-[var(--primary)] px-2 py-1 rounded-lg">
+                                            🔢 رقم الإعلان: {ad.id.slice(-8).toUpperCase()}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -323,6 +328,15 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
                                             <div className="text-sm text-[var(--foreground-muted)]">صاحب الإعلان</div>
                                         </div>
                                     </div>
+                                    {/* Rate Seller Button */}
+                                    {!isOwner && (
+                                        <button
+                                            onClick={() => setShowRatingModal(true)}
+                                            className="btn btn-secondary w-full mt-3"
+                                        >
+                                            ⭐ تقييم البائع
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Warning */}
@@ -341,6 +355,17 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
             </main>
 
             <Footer />
+
+            {/* Rating Modal */}
+            {showRatingModal && (
+                <RatingModal
+                    userId={ad.userId}
+                    userName={ad.user.name}
+                    onClose={() => setShowRatingModal(false)}
+                    onSuccess={() => alert("تم إضافة تقييمك بنجاح!")}
+                />
+            )}
         </div>
     );
 }
+
