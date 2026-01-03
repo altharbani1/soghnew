@@ -94,7 +94,7 @@ export default async function AdDetailPage({ params }: Props) {
             rating: ad.user.rating,
             totalReviews: ad.user.totalReviews
         },
-        images: ad.images.map(img => ({
+        images: ad.images.map((img: { id: string; imageUrl: string; isPrimary: boolean }) => ({
             id: img.id,
             imageUrl: img.imageUrl,
             isPrimary: img.isPrimary
