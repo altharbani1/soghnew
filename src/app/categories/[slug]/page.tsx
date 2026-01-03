@@ -5,7 +5,7 @@ import Link from "next/link";
 import { use } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { saudiCities, formatPrice, formatNumber } from "@/lib/data";
+import { saudiCities, formatPrice, formatNumber, categories as localCategories, getCategoryBySlug } from "@/lib/data";
 
 interface Ad {
     id: string;
@@ -57,12 +57,41 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
         async function fetchData() {
             setLoading(true);
             try {
-                // Fetch category details
-                const catRes = await fetch(`/api/categories/${resolvedParams.slug}`);
-                if (catRes.ok) {
-                    const catData = await catRes.json();
-                    setCategory(catData.category);
+                // Try to fetch category from API
+                let categoryData = null;
+                try {
+                    const catRes = await fetch(`/api/categories/${resolvedParams.slug}`);
+                    if (catRes.ok) {
+                        const catJson = await catRes.json();
+                        categoryData = catJson.category;
+                    }
+                } catch {
+                    // API failed, will use fallback
                 }
+
+                // Fallback to local categories if API failed
+                if (!categoryData) {
+                    const localCat = getCategoryBySlug(resolvedParams.slug);
+                    if (localCat) {
+                        categoryData = {
+                            id: localCat.id,
+                            name: localCat.name,
+                            slug: localCat.slug,
+                            icon: localCat.icon,
+                            color: localCat.color,
+                            adCount: localCat.count,
+                            subcategories: localCat.subcategories?.map(sub => ({
+                                id: sub.id,
+                                name: sub.name,
+                                slug: sub.slug,
+                                icon: sub.icon,
+                                adCount: sub.count
+                            })) || []
+                        };
+                    }
+                }
+
+                setCategory(categoryData);
 
                 // Fetch ads for this category
                 let url = `/api/ads?category=${resolvedParams.slug}`;
