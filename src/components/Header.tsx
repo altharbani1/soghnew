@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import ThemeToggle from "./ThemeToggle";
 import AdvancedSearch from "./AdvancedSearch";
 import NotificationBell from "./NotificationBell";
 
@@ -72,8 +71,7 @@ export default function Header() {
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-3">
-                        {/* Theme Toggle */}
-                        <ThemeToggle />
+
 
                         {isLoading ? (
                             <div className="w-24 h-8 bg-[var(--background-secondary)] rounded-lg animate-pulse"></div>
@@ -174,7 +172,7 @@ export default function Header() {
 
                     {/* Mobile Actions */}
                     <div className="flex md:hidden items-center gap-2">
-                        <ThemeToggle />
+
                         {isLoggedIn && (
                             <Link href="/messages" className="relative p-2 hover:bg-[var(--background-secondary)] rounded-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
