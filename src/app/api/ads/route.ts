@@ -26,6 +26,11 @@ export async function GET(request: NextRequest) {
             status: "active",
         }
 
+        const userId = searchParams.get("userId")
+        if (userId) {
+            where.userId = userId
+        }
+
         if (category) {
             where.category = { slug: category }
         }

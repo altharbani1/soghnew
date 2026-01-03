@@ -1,43 +1,142 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdListItem from "@/components/AdListItem";
-import VerifiedBadge, { BadgeGroup, VerificationRequestCard } from "@/components/VerifiedBadge";
-import { sampleAds } from "@/lib/data";
 
-// Mock user data
-const mockUser = {
-    id: "u1",
-    name: "أحمد محمد",
-    email: "ahmed@example.com",
-    phone: "0500000000",
-    avatar: "أ",
-    joinDate: "يناير 2023",
-    adsCount: 12,
-    rating: 4.8,
-    reviewsCount: 45,
-    verified: true,
-    phoneVerified: true,
-    badges: ["verified", "trusted"] as ("verified" | "business" | "trusted" | "premium")[],
-};
+interface Ad {
+    id: string;
+    title: string;
+    price: number;
+    city: string;
+    district?: string;
+    createdAt: string;
+    viewsCount: number;
+    messagesCount: number;
+    isFeatured: boolean;
+    category: {
+        name: string;
+    };
+}
 
-// Mock user's ads
-const myAds = sampleAds.slice(0, 4);
-const favoriteAds = sampleAds.slice(2, 5);
+interface UserData {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    avatar?: string;
+    createdAt: string;
+    totalAds: number;
+    activeAds: number;
+    rating: number;
+}
 
 export default function ProfilePage() {
-    const [activeTab, setActiveTab] = useState<"ads" | "favorites" | "verification" | "settings">("ads");
-    const [showVerificationModal, setShowVerificationModal] = useState(false);
+    const { data: session, status } = useSession();
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"ads" | "favorites" | "settings">("ads");
+    const [myAds, setMyAds] = useState<Ad[]>([]);
+    const [favoriteAds, setFavoriteAds] = useState<Ad[]>([]);
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            if (status === "authenticated" && session?.user?.id) {
+                try {
+                    // Fetch user profile
+                    const userRes = await fetch("/api/users/me");
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        setUserData(userData.user);
+                    }
+
+                    // Fetch user's ads
+                    const adsRes = await fetch(`/api/ads?userId=${session.user.id}`);
+                    if (adsRes.ok) {
+                        const adsData = await adsRes.json();
+                        setMyAds(adsData.ads || []);
+                    }
+
+                    // Fetch favorites
+                    const favRes = await fetch("/api/favorites");
+                    if (favRes.ok) {
+                        const favData = await favRes.json();
+                        setFavoriteAds(favData.favorites || []);
+                    }
+                } catch (error) {
+                    console.error("Error fetching profile data:", error);
+                }
+            }
+            setLoading(false);
+        }
+
+        if (status !== "loading") {
+            fetchData();
+        }
+    }, [session, status]);
+
+    if (status === "loading" || loading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
+                <Header />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[var(--foreground-muted)]">جاري التحميل...</p>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
+    if (status === "unauthenticated") {
+        return (
+            <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
+                <Header />
+                <main className="flex-1 flex items-center justify-center py-12">
+                    <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] p-8 max-w-md mx-4 text-center">
+                        <div className="text-6xl mb-4">🔒</div>
+                        <h1 className="text-2xl font-bold mb-2">يجب تسجيل الدخول</h1>
+                        <p className="text-[var(--foreground-muted)] mb-6">
+                            للوصول إلى ملفك الشخصي، يرجى تسجيل الدخول
+                        </p>
+                        <Link href="/auth/login" className="btn btn-primary w-full">
+                            تسجيل الدخول
+                        </Link>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
+    const user = userData || {
+        id: session?.user?.id || "",
+        name: session?.user?.name || "مستخدم",
+        email: session?.user?.email || "",
+        phone: (session?.user as any)?.phone || "",
+        createdAt: new Date().toISOString(),
+        totalAds: 0,
+        activeAds: 0,
+        rating: 0,
+    };
 
     const tabs = [
         { id: "ads", label: "إعلاناتي", count: myAds.length },
         { id: "favorites", label: "المفضلة", count: favoriteAds.length },
-        { id: "verification", label: "التوثيق", count: null, icon: "🛡️" },
         { id: "settings", label: "الإعدادات", count: null },
     ];
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("ar-SA", { year: "numeric", month: "long" });
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
@@ -51,43 +150,28 @@ export default function ProfilePage() {
                             {/* Avatar */}
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center text-white text-4xl font-bold">
-                                    {mockUser.avatar}
+                                    {user.name?.charAt(0) || "م"}
                                 </div>
-                                {mockUser.verified && (
-                                    <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--secondary)] flex items-center justify-center text-white">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
-                                    </div>
-                                )}
                             </div>
 
                             {/* Info */}
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h1 className="text-2xl font-bold">{mockUser.name}</h1>
-                                    <BadgeGroup badges={mockUser.badges} size="md" />
+                                    <h1 className="text-2xl font-bold">{user.name}</h1>
                                 </div>
                                 <p className="text-[var(--foreground-muted)] mb-3">
-                                    عضو منذ {mockUser.joinDate}
+                                    عضو منذ {formatDate(user.createdAt)}
                                 </p>
                                 <div className="flex flex-wrap items-center gap-4 text-sm">
-                                    <div className="flex items-center gap-1 text-[var(--accent)]">
-                                        <span>⭐</span>
-                                        <span className="font-semibold">{mockUser.rating}</span>
-                                        <span className="text-[var(--foreground-muted)]">({mockUser.reviewsCount} تقييم)</span>
-                                    </div>
                                     <div className="text-[var(--foreground-muted)]">
-                                        {mockUser.adsCount} إعلان نشط
+                                        {myAds.length} إعلان نشط
                                     </div>
-                                    {mockUser.phoneVerified && (
-                                        <div className="flex items-center gap-1 text-[var(--secondary)]">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                            </svg>
-                                            <span className="text-xs">جوال موثق</span>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-1 text-[var(--secondary)]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                        </svg>
+                                        <span className="text-xs">{user.phone}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -100,9 +184,6 @@ export default function ProfilePage() {
                                     </svg>
                                     إعلان جديد
                                 </Link>
-                                <button className="btn btn-secondary">
-                                    تعديل الملف
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -118,7 +199,6 @@ export default function ProfilePage() {
                                     : "hover:bg-[var(--background-secondary)]"
                                     }`}
                             >
-                                {tab.icon && <span className="ml-1">{tab.icon}</span>}
                                 {tab.label}
                                 {tab.count !== null && (
                                     <span className={`mr-2 px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id ? "bg-white/20" : "bg-[var(--background-secondary)]"
@@ -133,73 +213,38 @@ export default function ProfilePage() {
                     {/* Tab Content */}
                     {activeTab === "ads" && (
                         <div className="space-y-4">
-                            {/* Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-4 text-center">
-                                    <div className="text-2xl font-bold text-[var(--primary)]">4</div>
-                                    <div className="text-sm text-[var(--foreground-muted)]">إعلانات نشطة</div>
-                                </div>
-                                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-4 text-center">
-                                    <div className="text-2xl font-bold text-[var(--secondary)]">1,234</div>
-                                    <div className="text-sm text-[var(--foreground-muted)]">إجمالي المشاهدات</div>
-                                </div>
-                                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-4 text-center">
-                                    <div className="text-2xl font-bold text-[var(--accent)]">56</div>
-                                    <div className="text-sm text-[var(--foreground-muted)]">التعليقات</div>
-                                </div>
-                                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-4 text-center">
-                                    <div className="text-2xl font-bold">8</div>
-                                    <div className="text-sm text-[var(--foreground-muted)]">إعلانات مباعة</div>
-                                </div>
-                            </div>
-
                             {/* My Ads List */}
                             <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
                                 <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-                                    <h2 className="font-bold">إعلاناتي النشطة</h2>
-                                    <select className="input py-2 px-3 w-auto text-sm">
-                                        <option>الأحدث</option>
-                                        <option>الأقدم</option>
-                                        <option>الأكثر مشاهدة</option>
-                                    </select>
+                                    <h2 className="font-bold">إعلاناتي</h2>
                                 </div>
-                                {myAds.map((ad) => (
-                                    <div key={ad.id} className="relative group">
+                                {myAds.length > 0 ? (
+                                    myAds.map((ad) => (
                                         <AdListItem
+                                            key={ad.id}
                                             id={ad.id}
                                             title={ad.title}
                                             price={ad.price}
-                                            location={ad.location}
-                                            date={ad.date}
-                                            category={ad.category}
-                                            featured={ad.featured}
-                                            views={ad.views}
-                                            commentsCount={3}
+                                            location={ad.city}
+                                            date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
+                                            category={ad.category.name}
+                                            featured={ad.isFeatured}
+                                            views={ad.viewsCount}
+                                            commentsCount={ad.messagesCount}
                                         />
-                                        {/* Actions Overlay */}
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)]" title="تعديل">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                                </svg>
-                                            </button>
-                                            <button className="p-2 rounded-lg bg-[var(--error)] text-white hover:opacity-80" title="حذف">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M3 6h18" />
-                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                </svg>
-                                            </button>
-                                            <button className="p-2 rounded-lg bg-[var(--accent)] text-white hover:opacity-80" title="رفع (تجديد)">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="m18 15-6-6-6 6" />
-                                                    <path d="M12 9v12" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-12 text-center">
+                                        <div className="text-5xl mb-4">📝</div>
+                                        <h3 className="text-lg font-semibold mb-2">لا توجد إعلانات</h3>
+                                        <p className="text-[var(--foreground-muted)] mb-4">
+                                            لم تقم بإضافة أي إعلانات بعد
+                                        </p>
+                                        <Link href="/ads/new" className="btn btn-primary">
+                                            أضف إعلانك الأول
+                                        </Link>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
@@ -210,28 +255,19 @@ export default function ProfilePage() {
                                 <h2 className="font-bold">الإعلانات المفضلة</h2>
                             </div>
                             {favoriteAds.length > 0 ? (
-                                favoriteAds.map((ad) => (
-                                    <div key={ad.id} className="relative group">
-                                        <AdListItem
-                                            id={ad.id}
-                                            title={ad.title}
-                                            price={ad.price}
-                                            location={ad.location}
-                                            date={ad.date}
-                                            category={ad.category}
-                                            featured={ad.featured}
-                                            views={ad.views}
-                                            commentsCount={3}
-                                        />
-                                        <button
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-lg text-[var(--error)] hover:bg-[var(--error)]/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            title="إزالة من المفضلة"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
-                                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                favoriteAds.map((ad: any) => (
+                                    <AdListItem
+                                        key={ad.id}
+                                        id={ad.ad?.id || ad.id}
+                                        title={ad.ad?.title || ad.title}
+                                        price={ad.ad?.price || ad.price}
+                                        location={ad.ad?.city || ad.city}
+                                        date={new Date(ad.ad?.createdAt || ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
+                                        category={ad.ad?.category?.name || ""}
+                                        featured={ad.ad?.isFeatured || false}
+                                        views={ad.ad?.viewsCount || 0}
+                                        commentsCount={0}
+                                    />
                                 ))
                             ) : (
                                 <div className="p-12 text-center">
@@ -245,59 +281,6 @@ export default function ProfilePage() {
                         </div>
                     )}
 
-                    {activeTab === "verification" && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Current Badges */}
-                            <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] p-6">
-                                <h2 className="font-bold text-lg mb-4">شاراتي الحالية</h2>
-
-                                {mockUser.badges.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {mockUser.badges.map((badge, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 p-4 rounded-xl bg-[var(--background-secondary)]">
-                                                <VerifiedBadge type={badge} size="lg" showLabel tooltip={false} />
-                                                <div className="flex-1 text-sm text-[var(--foreground-muted)]">
-                                                    تم التوثيق في يناير 2024
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 text-[var(--foreground-muted)]">
-                                        <div className="text-4xl mb-3">🛡️</div>
-                                        <p>لا توجد شارات بعد</p>
-                                    </div>
-                                )}
-
-                                {/* Available Badges */}
-                                <div className="mt-6 pt-6 border-t border-[var(--border)]">
-                                    <h3 className="font-semibold mb-3">الشارات المتاحة</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 rounded-xl border border-[var(--border)] text-center">
-                                            <VerifiedBadge type="verified" size="lg" tooltip={false} />
-                                            <div className="text-xs mt-2 text-[var(--foreground-muted)]">موثق الهوية</div>
-                                        </div>
-                                        <div className="p-3 rounded-xl border border-[var(--border)] text-center">
-                                            <VerifiedBadge type="business" size="lg" tooltip={false} />
-                                            <div className="text-xs mt-2 text-[var(--foreground-muted)]">تاجر معتمد</div>
-                                        </div>
-                                        <div className="p-3 rounded-xl border border-[var(--border)] text-center">
-                                            <VerifiedBadge type="trusted" size="lg" tooltip={false} />
-                                            <div className="text-xs mt-2 text-[var(--foreground-muted)]">بائع موثوق</div>
-                                        </div>
-                                        <div className="p-3 rounded-xl border border-[var(--border)] text-center">
-                                            <VerifiedBadge type="premium" size="lg" tooltip={false} />
-                                            <div className="text-xs mt-2 text-[var(--foreground-muted)]">عضو مميز</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Request Verification */}
-                            <VerificationRequestCard />
-                        </div>
-                    )}
-
                     {activeTab === "settings" && (
                         <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] divide-y divide-[var(--border)]">
                             {/* Personal Info */}
@@ -306,85 +289,17 @@ export default function ProfilePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">الاسم</label>
-                                        <input type="text" defaultValue={mockUser.name} className="input" />
+                                        <input type="text" defaultValue={user.name} className="input" readOnly />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">رقم الجوال</label>
-                                        <div className="flex gap-2">
-                                            <input type="tel" defaultValue={mockUser.phone} className="input flex-1" />
-                                            {mockUser.phoneVerified ? (
-                                                <span className="btn bg-[var(--secondary)]/10 text-[var(--secondary)] cursor-default">
-                                                    ✓ موثق
-                                                </span>
-                                            ) : (
-                                                <button className="btn btn-primary">توثيق</button>
-                                            )}
-                                        </div>
+                                        <input type="tel" defaultValue={user.phone} className="input" readOnly />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">البريد الإلكتروني</label>
-                                        <input type="email" defaultValue={mockUser.email} className="input" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">المدينة</label>
-                                        <select className="input">
-                                            <option>الرياض</option>
-                                            <option>جدة</option>
-                                            <option>مكة</option>
-                                        </select>
+                                        <input type="email" defaultValue={user.email} className="input" readOnly />
                                     </div>
                                 </div>
-                                <button className="btn btn-primary mt-4">حفظ التغييرات</button>
-                            </div>
-
-                            {/* Password */}
-                            <div className="p-6">
-                                <h2 className="font-bold mb-4">تغيير كلمة المرور</h2>
-                                <div className="max-w-md space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">كلمة المرور الحالية</label>
-                                        <input type="password" className="input" placeholder="••••••••" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">كلمة المرور الجديدة</label>
-                                        <input type="password" className="input" placeholder="••••••••" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">تأكيد كلمة المرور</label>
-                                        <input type="password" className="input" placeholder="••••••••" />
-                                    </div>
-                                </div>
-                                <button className="btn btn-secondary mt-4">تحديث كلمة المرور</button>
-                            </div>
-
-                            {/* Notifications */}
-                            <div className="p-6">
-                                <h2 className="font-bold mb-4">الإشعارات</h2>
-                                <div className="space-y-3">
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <span>إشعارات التعليقات الجديدة</span>
-                                        <input type="checkbox" defaultChecked className="w-5 h-5" />
-                                    </label>
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <span>إشعارات الرسائل</span>
-                                        <input type="checkbox" defaultChecked className="w-5 h-5" />
-                                    </label>
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <span>تنبيهات البحث</span>
-                                        <input type="checkbox" className="w-5 h-5" />
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Danger Zone */}
-                            <div className="p-6">
-                                <h2 className="font-bold text-[var(--error)] mb-4">منطقة الخطر</h2>
-                                <p className="text-[var(--foreground-muted)] mb-4">
-                                    حذف الحساب نهائياً مع جميع الإعلانات والبيانات
-                                </p>
-                                <button className="btn bg-[var(--error)] text-white hover:opacity-80">
-                                    حذف الحساب
-                                </button>
                             </div>
                         </div>
                     )}
