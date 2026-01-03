@@ -319,15 +319,16 @@ export default function AdDetailPage({ params }: { params: Promise<{ id: string 
 
                                 {/* Seller Info */}
                                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
-                                    <div className="flex items-center gap-3 mb-3">
+                                    <Link href={`/users/${ad.userId}`} className="flex items-center gap-3 mb-3 hover:bg-[var(--background-secondary)] p-2 -m-2 rounded-xl transition-colors">
                                         <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-bold text-lg">
                                             {ad.user.name.charAt(0)}
                                         </div>
                                         <div className="flex-1">
-                                            <div className="font-semibold">{ad.user.name}</div>
-                                            <div className="text-sm text-[var(--foreground-muted)]">صاحب الإعلان</div>
+                                            <div className="font-semibold hover:text-[var(--primary)] transition-colors">{ad.user.name}</div>
+                                            <div className="text-sm text-[var(--foreground-muted)]">عرض الملف الشخصي</div>
                                         </div>
-                                    </div>
+                                        <span className="text-[var(--foreground-muted)]">←</span>
+                                    </Link>
                                     {/* Rate Seller Button */}
                                     {!isOwner && (
                                         <button

@@ -200,7 +200,7 @@ export default function CategoriesPage() {
                                                 {subcategoriesToShow?.map((sub) => (
                                                     <Link
                                                         key={sub.id}
-                                                        href={`/categories/${category.slug}/${sub.slug}`}
+                                                        href={`/categories/${category.slug}?subcategory=${sub.slug}`}
                                                         className="group/sub relative flex items-center gap-3 p-3 rounded-xl bg-[var(--background-secondary)] hover:bg-gradient-to-r hover:from-[var(--primary)]/5 hover:to-[var(--primary)]/10 border border-transparent hover:border-[var(--primary)]/20 transition-all duration-300 hover:-translate-y-0.5"
                                                         onMouseEnter={() => setHoveredSubcategory(sub.id)}
                                                         onMouseLeave={() => setHoveredSubcategory(null)}

@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { use } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdListItem from "@/components/AdListItem";
 import { saudiCities, formatPrice, formatNumber, categories as localCategories, getCategoryBySlug } from "@/lib/data";
 
 interface Ad {
@@ -41,10 +43,11 @@ interface Category {
 
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
     const resolvedParams = use(params);
+    const searchParams = useSearchParams();
     const [category, setCategory] = useState<Category | null>(null);
     const [ads, setAds] = useState<Ad[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string>(searchParams.get('subcategory') || "");
     const [sortBy, setSortBy] = useState("newest");
     const [selectedCity, setSelectedCity] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -314,42 +317,21 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                                 </span>
                             </div>
 
-                            {/* Ads Grid */}
+                            {/* Ads List */}
                             {ads.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
                                     {ads.map((ad) => (
-                                        <Link
+                                        <AdListItem
                                             key={ad.id}
-                                            href={`/ads/${ad.id}`}
-                                            className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden hover:border-[var(--primary)] hover:shadow-lg transition-all"
-                                        >
-                                            {/* Image */}
-                                            <div className="aspect-video bg-[var(--background-secondary)] relative">
-                                                {ad.images?.[0] ? (
-                                                    <img src={ad.images[0].imageUrl} alt={ad.title} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
-                                                )}
-                                                {ad.isFeatured && (
-                                                    <span className="absolute top-2 right-2 px-2 py-1 bg-[var(--warning)] text-white text-xs rounded-lg">
-                                                        ⭐ مميز
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="p-4">
-                                                <h3 className="font-semibold mb-2 truncate">{ad.title}</h3>
-                                                <div className="text-lg font-bold text-[var(--primary)] mb-2">
-                                                    {formatPrice(ad.price)}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
-                                                    <span>📍 {ad.city}</span>
-                                                    <span>•</span>
-                                                    <span>👁️ {ad.viewsCount}</span>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                            id={ad.id}
+                                            title={ad.title}
+                                            price={ad.price}
+                                            location={ad.district ? `${ad.district}, ${ad.city}` : ad.city}
+                                            date={new Date(ad.createdAt).toLocaleDateString('ar-SA')}
+                                            category={ad.category?.name || category?.name || ""}
+                                            featured={ad.isFeatured}
+                                            views={ad.viewsCount}
+                                        />
                                     ))}
                                 </div>
                             ) : (
