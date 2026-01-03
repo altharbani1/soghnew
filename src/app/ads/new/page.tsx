@@ -2,24 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { categories, saudiCities, getNeighborhoods } from "@/lib/data";
 
-// Simulated current user data (in production, get from auth context/API)
-const currentUser = {
-    id: "u1",
-    name: "أحمد محمد",
-    phone: "0501234567",
-    email: "ahmed@example.com",
-    verified: true,
-};
-
 export default function NewAdPage() {
     const router = useRouter();
+    const { data: session, status } = useSession();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [availableNeighborhoods, setAvailableNeighborhoods] = useState<string[]>([]);
@@ -29,19 +24,26 @@ export default function NewAdPage() {
         subcategory: "",
         description: "",
         price: "",
+        priceType: "fixed",
         city: "",
         neighborhood: "",
         location: "",
-        phone: currentUser.phone, // Auto-fill from user profile
+        phone: "",
         images: [] as File[],
     });
+
+    // Set phone from session when available
+    useEffect(() => {
+        if (session?.user?.phone) {
+            setFormData(prev => ({ ...prev, phone: session.user.phone }));
+        }
+    }, [session]);
 
     // Update neighborhoods when city changes
     useEffect(() => {
         if (formData.city) {
             const neighborhoods = getNeighborhoods(formData.city);
             setAvailableNeighborhoods(neighborhoods);
-            // Reset neighborhood when city changes
             if (!neighborhoods.includes(formData.neighborhood)) {
                 setFormData(prev => ({ ...prev, neighborhood: "" }));
             }
@@ -50,6 +52,48 @@ export default function NewAdPage() {
         }
     }, [formData.city]);
 
+    // Redirect if not logged in
+    if (status === "loading") {
+        return (
+            <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
+                <Header />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[var(--foreground-muted)]">جاري التحميل...</p>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
+    if (status === "unauthenticated") {
+        return (
+            <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
+                <Header />
+                <main className="flex-1 flex items-center justify-center py-12">
+                    <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] p-8 max-w-md mx-4 text-center">
+                        <div className="text-6xl mb-4">🔒</div>
+                        <h1 className="text-2xl font-bold mb-2">يجب تسجيل الدخول</h1>
+                        <p className="text-[var(--foreground-muted)] mb-6">
+                            لإضافة إعلان جديد، يرجى تسجيل الدخول أو إنشاء حساب جديد
+                        </p>
+                        <div className="space-y-3">
+                            <Link href="/auth/login" className="btn btn-primary w-full">
+                                تسجيل الدخول
+                            </Link>
+                            <Link href="/auth/register" className="btn btn-secondary w-full">
+                                إنشاء حساب جديد
+                            </Link>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
     const selectedCategory = categories.find(c => c.slug === formData.category);
 
     const handleChange = (
@@ -57,6 +101,7 @@ export default function NewAdPage() {
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        setError("");
     };
 
     const handleImageUpload = (files: FileList | null) => {
@@ -93,13 +138,74 @@ export default function NewAdPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError("");
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        try {
+            // Find category ID
+            const category = categories.find(c => c.slug === formData.category);
+            if (!category) {
+                setError("يرجى اختيار القسم");
+                setIsSubmitting(false);
+                return;
+            }
 
-        // In production, this would save to database
-        alert("تم نشر إعلانك بنجاح! ✅");
-        router.push("/");
+            // Upload images first (if any)
+            const imageUrls: string[] = [];
+            for (const file of formData.images) {
+                const formDataImg = new FormData();
+                formDataImg.append("file", file);
+
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formDataImg,
+                });
+
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    imageUrls.push(uploadData.url);
+                }
+            }
+
+            // Create the ad
+            const response = await fetch("/api/ads", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    price: parseFloat(formData.price),
+                    priceType: formData.priceType,
+                    categorySlug: formData.category,
+                    subcategorySlug: formData.subcategory || undefined,
+                    city: formData.city,
+                    district: formData.neighborhood,
+                    detailedLocation: formData.location || undefined,
+                    contactPhone: formData.phone,
+                    images: imageUrls.map((url, index) => ({
+                        imageUrl: url,
+                        isPrimary: index === 0,
+                        displayOrder: index,
+                    })),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.error || "حدث خطأ أثناء نشر الإعلان");
+                return;
+            }
+
+            // Success - redirect to home
+            router.push("/");
+            router.refresh();
+        } catch (err) {
+            setError("حدث خطأ غير متوقع");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const isStep1Valid = formData.title && formData.category;
@@ -124,14 +230,20 @@ export default function NewAdPage() {
                             أضف إعلانك الجديد
                         </h1>
                         <p className="text-[var(--foreground-muted)]">
-                            أضف إعلانك في 3 خطوات بسيطة وابدأ البيع الآن
+                            مرحباً {session?.user?.name}، أضف إعلانك في 3 خطوات بسيطة
                         </p>
                     </div>
 
-                    {/* Progress Steps - Enhanced */}
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-xl text-center">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Progress Steps */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between relative">
-                            {/* Progress Line */}
                             <div className="absolute top-5 right-0 left-0 h-1 bg-[var(--border)] -z-10" />
                             <div
                                 className="absolute top-5 right-0 h-1 bg-gradient-to-l from-[var(--primary)] to-[var(--secondary)] -z-10 transition-all duration-500"
@@ -185,6 +297,7 @@ export default function NewAdPage() {
                                             placeholder="مثال: ايفون 15 برو ماكس جديد بكرتونه"
                                             className="input text-lg"
                                             maxLength={100}
+                                            required
                                         />
                                         <div className="flex justify-between mt-1">
                                             <p className="text-xs text-[var(--foreground-muted)]">
@@ -293,6 +406,7 @@ export default function NewAdPage() {
                                             placeholder="اكتب وصفاً تفصيلياً للإعلان...&#10;• الحالة: جديد/مستعمل&#10;• المواصفات والمميزات&#10;• سبب البيع&#10;• طريقة التسليم"
                                             className="input min-h-[180px] resize-none leading-relaxed"
                                             maxLength={2000}
+                                            required
                                         />
                                         <div className="flex justify-between mt-1">
                                             <p className="text-xs text-[var(--foreground-muted)]">
@@ -318,6 +432,7 @@ export default function NewAdPage() {
                                                     placeholder="0"
                                                     className="input text-lg font-semibold pl-16"
                                                     min="0"
+                                                    required
                                                 />
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)] font-medium">
                                                     ر.س
@@ -328,7 +443,12 @@ export default function NewAdPage() {
                                             <label className="block text-sm font-semibold mb-2">
                                                 نوع السعر
                                             </label>
-                                            <select className="input cursor-pointer">
+                                            <select
+                                                name="priceType"
+                                                value={formData.priceType}
+                                                onChange={handleChange}
+                                                className="input cursor-pointer"
+                                            >
                                                 <option value="fixed">ثابت</option>
                                                 <option value="negotiable">قابل للتفاوض</option>
                                                 <option value="contact">على السوم</option>
@@ -446,6 +566,7 @@ export default function NewAdPage() {
                                                 value={formData.city}
                                                 onChange={handleChange}
                                                 className="input cursor-pointer"
+                                                required
                                             >
                                                 <option value="">اختر المدينة</option>
                                                 {saudiCities.map((city) => (
@@ -466,6 +587,7 @@ export default function NewAdPage() {
                                                 onChange={handleChange}
                                                 className="input cursor-pointer"
                                                 disabled={!formData.city}
+                                                required
                                             >
                                                 <option value="">{formData.city ? "اختر الحي" : "اختر المدينة أولاً"}</option>
                                                 {availableNeighborhoods.map((neighborhood) => (
@@ -474,11 +596,6 @@ export default function NewAdPage() {
                                                     </option>
                                                 ))}
                                             </select>
-                                            {formData.city && availableNeighborhoods.length > 0 && (
-                                                <p className="text-xs text-[var(--foreground-muted)] mt-1">
-                                                    {availableNeighborhoods.length} حي متاح في {formData.city}
-                                                </p>
-                                            )}
                                         </div>
                                     </div>
 
@@ -494,9 +611,6 @@ export default function NewAdPage() {
                                             placeholder="مثال: شارع الأمير سلطان، بالقرب من مول..."
                                             className="input"
                                         />
-                                        <p className="text-xs text-[var(--foreground-muted)] mt-1">
-                                            أضف معلومات إضافية لمساعدة المشتري في الوصول
-                                        </p>
                                     </div>
 
                                     <div className="p-4 rounded-xl bg-[var(--primary)]/5 border border-[var(--primary)]/20">
@@ -521,12 +635,7 @@ export default function NewAdPage() {
                                                 <span className="text-xs">موثق</span>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-[var(--foreground-muted)] mt-2 flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <path d="M12 16v-4" />
-                                                <path d="M12 8h.01" />
-                                            </svg>
+                                        <p className="text-xs text-[var(--foreground-muted)] mt-2">
                                             سيتم استخدام رقم الجوال المسجل في حسابك للتواصل
                                         </p>
                                     </div>
