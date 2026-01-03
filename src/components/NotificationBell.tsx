@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 // Notification types
 interface Notification {
@@ -14,49 +15,6 @@ interface Notification {
     link?: string;
     icon?: string;
 }
-
-// Sample notifications
-const sampleNotifications: Notification[] = [
-    {
-        id: "n1",
-        type: "message",
-        title: "رسالة جديدة",
-        message: "محمد العتيبي أرسل لك رسالة بخصوص إعلانك",
-        time: "منذ 5 دقائق",
-        read: false,
-        link: "/messages",
-        icon: "💬"
-    },
-    {
-        id: "n2",
-        type: "offer",
-        title: "عرض سعر جديد",
-        message: "عبدالله السعيد قدم عرض 45,000 ر.س على سيارتك",
-        time: "منذ ساعة",
-        read: false,
-        link: "/ads/1",
-        icon: "💰"
-    },
-    {
-        id: "n3",
-        type: "alert",
-        title: "تم حفظ إعلانك",
-        message: "5 أشخاص حفظوا إعلانك في المفضلة",
-        time: "منذ 3 ساعات",
-        read: true,
-        link: "/profile",
-        icon: "⭐"
-    },
-    {
-        id: "n4",
-        type: "system",
-        title: "تحديث النظام",
-        message: "تم تحديث سياسة الخصوصية",
-        time: "منذ يوم",
-        read: true,
-        icon: "🔔"
-    }
-];
 
 // Notification Item Component
 function NotificationItem({ notification, onRead }: { notification: Notification; onRead: (id: string) => void }) {
@@ -106,9 +64,15 @@ function NotificationItem({ notification, onRead }: { notification: Notification
 
 // Notification Bell Component
 export function NotificationBell() {
+    const { status } = useSession();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState(sampleNotifications);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Don't show notifications for unauthenticated users
+    if (status !== "authenticated") {
+        return null;
+    }
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

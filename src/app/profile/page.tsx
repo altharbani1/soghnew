@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AdListItem from "@/components/AdListItem";
+import { formatPrice } from "@/lib/data";
 
 interface Ad {
     id: string;
@@ -21,6 +21,7 @@ interface Ad {
     category: {
         name: string;
     };
+    images?: { imageUrl: string }[];
 }
 
 interface UserData {
@@ -43,42 +44,58 @@ export default function ProfilePage() {
     const [favoriteAds, setFavoriteAds] = useState<Ad[]>([]);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const fetchData = async () => {
+        if (status === "authenticated" && session?.user?.id) {
+            try {
+                const userRes = await fetch("/api/users/me");
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    setUserData(userData.user);
+                }
+
+                const adsRes = await fetch(`/api/ads?userId=${session.user.id}`);
+                if (adsRes.ok) {
+                    const adsData = await adsRes.json();
+                    setMyAds(adsData.ads || []);
+                }
+
+                const favRes = await fetch("/api/favorites");
+                if (favRes.ok) {
+                    const favData = await favRes.json();
+                    setFavoriteAds(favData.favorites || []);
+                }
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+            }
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
-        async function fetchData() {
-            if (status === "authenticated" && session?.user?.id) {
-                try {
-                    // Fetch user profile
-                    const userRes = await fetch("/api/users/me");
-                    if (userRes.ok) {
-                        const userData = await userRes.json();
-                        setUserData(userData.user);
-                    }
-
-                    // Fetch user's ads
-                    const adsRes = await fetch(`/api/ads?userId=${session.user.id}`);
-                    if (adsRes.ok) {
-                        const adsData = await adsRes.json();
-                        setMyAds(adsData.ads || []);
-                    }
-
-                    // Fetch favorites
-                    const favRes = await fetch("/api/favorites");
-                    if (favRes.ok) {
-                        const favData = await favRes.json();
-                        setFavoriteAds(favData.favorites || []);
-                    }
-                } catch (error) {
-                    console.error("Error fetching profile data:", error);
-                }
-            }
-            setLoading(false);
-        }
-
         if (status !== "loading") {
             fetchData();
         }
     }, [session, status]);
+
+    const handleDeleteAd = async (adId: string) => {
+        if (!confirm("هل أنت متأكد من حذف هذا الإعلان؟")) return;
+
+        setDeletingId(adId);
+        try {
+            const res = await fetch(`/api/ads/${adId}`, { method: "DELETE" });
+            if (res.ok) {
+                setMyAds(prev => prev.filter(ad => ad.id !== adId));
+            } else {
+                alert("حدث خطأ أثناء حذف الإعلان");
+            }
+        } catch (error) {
+            alert("حدث خطأ أثناء حذف الإعلان");
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     if (status === "loading" || loading) {
         return (
@@ -147,18 +164,14 @@ export default function ProfilePage() {
                     {/* Profile Header */}
                     <div className="bg-[var(--background)] rounded-2xl border border-[var(--border)] p-6 mb-6">
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            {/* Avatar */}
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center text-white text-4xl font-bold">
                                     {user.name?.charAt(0) || "م"}
                                 </div>
                             </div>
 
-                            {/* Info */}
                             <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h1 className="text-2xl font-bold">{user.name}</h1>
-                                </div>
+                                <h1 className="text-2xl font-bold mb-1">{user.name}</h1>
                                 <p className="text-[var(--foreground-muted)] mb-3">
                                     عضو منذ {formatDate(user.createdAt)}
                                 </p>
@@ -167,24 +180,14 @@ export default function ProfilePage() {
                                         {myAds.length} إعلان نشط
                                     </div>
                                     <div className="flex items-center gap-1 text-[var(--secondary)]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                        </svg>
                                         <span className="text-xs">{user.phone}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex gap-3">
-                                <Link href="/ads/new" className="btn btn-primary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M5 12h14" />
-                                        <path d="M12 5v14" />
-                                    </svg>
-                                    إعلان جديد
-                                </Link>
-                            </div>
+                            <Link href="/ads/new" className="btn btn-primary">
+                                + إعلان جديد
+                            </Link>
                         </div>
                     </div>
 
@@ -212,63 +215,100 @@ export default function ProfilePage() {
 
                     {/* Tab Content */}
                     {activeTab === "ads" && (
-                        <div className="space-y-4">
-                            {/* My Ads List */}
-                            <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
-                                <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-                                    <h2 className="font-bold">إعلاناتي</h2>
-                                </div>
-                                {myAds.length > 0 ? (
-                                    myAds.map((ad) => (
-                                        <AdListItem
-                                            key={ad.id}
-                                            id={ad.id}
-                                            title={ad.title}
-                                            price={ad.price}
-                                            location={ad.city}
-                                            date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                                            category={ad.category.name}
-                                            featured={ad.isFeatured}
-                                            views={ad.viewsCount}
-                                            commentsCount={ad.messagesCount}
-                                        />
-                                    ))
-                                ) : (
-                                    <div className="p-12 text-center">
-                                        <div className="text-5xl mb-4">📝</div>
-                                        <h3 className="text-lg font-semibold mb-2">لا توجد إعلانات</h3>
-                                        <p className="text-[var(--foreground-muted)] mb-4">
-                                            لم تقم بإضافة أي إعلانات بعد
-                                        </p>
-                                        <Link href="/ads/new" className="btn btn-primary">
-                                            أضف إعلانك الأول
-                                        </Link>
-                                    </div>
-                                )}
+                        <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
+                            <div className="p-4 border-b border-[var(--border)]">
+                                <h2 className="font-bold">إعلاناتي</h2>
                             </div>
+                            {myAds.length > 0 ? (
+                                <div className="divide-y divide-[var(--border)]">
+                                    {myAds.map((ad) => (
+                                        <div key={ad.id} className="p-4 flex items-center gap-4 hover:bg-[var(--background-secondary)] transition-colors">
+                                            {/* Image */}
+                                            <div className="w-20 h-20 rounded-xl bg-[var(--background-secondary)] overflow-hidden flex-shrink-0">
+                                                {ad.images && ad.images[0] ? (
+                                                    <img src={ad.images[0].imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-3xl">📷</div>
+                                                )}
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <Link href={`/ads/${ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
+                                                    {ad.title}
+                                                </Link>
+                                                <div className="text-lg font-bold text-[var(--primary)]">
+                                                    {formatPrice(ad.price)}
+                                                </div>
+                                                <div className="flex items-center gap-3 text-sm text-[var(--foreground-muted)]">
+                                                    <span>📍 {ad.city}</span>
+                                                    <span>👁️ {ad.viewsCount}</span>
+                                                    <span>{new Date(ad.createdAt).toLocaleDateString('ar-SA')}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex gap-2">
+                                                <Link
+                                                    href={`/ads/${ad.id}`}
+                                                    className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20"
+                                                    title="عرض"
+                                                >
+                                                    👁️
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDeleteAd(ad.id)}
+                                                    disabled={deletingId === ad.id}
+                                                    className="p-2 rounded-lg bg-[var(--error)]/10 text-[var(--error)] hover:bg-[var(--error)]/20 disabled:opacity-50"
+                                                    title="حذف"
+                                                >
+                                                    {deletingId === ad.id ? "..." : "🗑️"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-12 text-center">
+                                    <div className="text-5xl mb-4">📝</div>
+                                    <h3 className="text-lg font-semibold mb-2">لا توجد إعلانات</h3>
+                                    <p className="text-[var(--foreground-muted)] mb-4">
+                                        لم تقم بإضافة أي إعلانات بعد
+                                    </p>
+                                    <Link href="/ads/new" className="btn btn-primary">
+                                        أضف إعلانك الأول
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {activeTab === "favorites" && (
                         <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
                             <div className="p-4 border-b border-[var(--border)]">
-                                <h2 className="font-bold">الإعلانات المفضلة</h2>
+                                <h2 className="font-bold">المفضلة</h2>
                             </div>
                             {favoriteAds.length > 0 ? (
-                                favoriteAds.map((ad: any) => (
-                                    <AdListItem
-                                        key={ad.id}
-                                        id={ad.ad?.id || ad.id}
-                                        title={ad.ad?.title || ad.title}
-                                        price={ad.ad?.price || ad.price}
-                                        location={ad.ad?.city || ad.city}
-                                        date={new Date(ad.ad?.createdAt || ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                                        category={ad.ad?.category?.name || ""}
-                                        featured={ad.ad?.isFeatured || false}
-                                        views={ad.ad?.viewsCount || 0}
-                                        commentsCount={0}
-                                    />
-                                ))
+                                <div className="divide-y divide-[var(--border)]">
+                                    {favoriteAds.map((fav: any) => {
+                                        const ad = fav.ad || fav;
+                                        return (
+                                            <div key={ad.id} className="p-4 flex items-center gap-4 hover:bg-[var(--background-secondary)]">
+                                                <div className="w-20 h-20 rounded-xl bg-[var(--background-secondary)] overflow-hidden flex-shrink-0">
+                                                    <div className="w-full h-full flex items-center justify-center text-3xl">📷</div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link href={`/ads/${ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
+                                                        {ad.title}
+                                                    </Link>
+                                                    <div className="text-lg font-bold text-[var(--primary)]">
+                                                        {formatPrice(ad.price)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             ) : (
                                 <div className="p-12 text-center">
                                     <div className="text-5xl mb-4">💔</div>
@@ -282,23 +322,20 @@ export default function ProfilePage() {
                     )}
 
                     {activeTab === "settings" && (
-                        <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] divide-y divide-[var(--border)]">
-                            {/* Personal Info */}
-                            <div className="p-6">
-                                <h2 className="font-bold mb-4">المعلومات الشخصية</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">الاسم</label>
-                                        <input type="text" defaultValue={user.name} className="input" readOnly />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">رقم الجوال</label>
-                                        <input type="tel" defaultValue={user.phone} className="input" readOnly />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">البريد الإلكتروني</label>
-                                        <input type="email" defaultValue={user.email} className="input" readOnly />
-                                    </div>
+                        <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-6">
+                            <h2 className="font-bold mb-4">المعلومات الشخصية</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">الاسم</label>
+                                    <input type="text" defaultValue={user.name} className="input" readOnly />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">رقم الجوال</label>
+                                    <input type="tel" defaultValue={user.phone} className="input" readOnly />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">البريد الإلكتروني</label>
+                                    <input type="email" defaultValue={user.email} className="input" readOnly />
                                 </div>
                             </div>
                         </div>
