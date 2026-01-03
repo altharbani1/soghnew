@@ -1,86 +1,64 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { use } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdListItem from "@/components/AdListItem";
 import { RatingDisplay } from "@/components/RatingModal";
+import prisma from "@/lib/db";
 
-interface User {
-    id: string;
-    name: string;
-    avatar?: string;
-    city?: string;
-    bio?: string;
-    rating: number;
-    totalReviews: number;
-    totalAds: number;
-    badges: string[];
-    createdAt: string;
+interface Props {
+    params: Promise<{ id: string }>;
 }
 
-interface Ad {
-    id: string;
-    title: string;
-    price: number;
-    city: string;
-    district?: string;
-    createdAt: string;
-    viewsCount: number;
-    isFeatured: boolean;
-    category: {
-        name: string;
-    };
-}
-
-export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
-    const resolvedParams = use(params);
-    const [user, setUser] = useState<User | null>(null);
-    const [ads, setAds] = useState<Ad[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // Fetch user details
-                const userRes = await fetch(`/api/users/${resolvedParams.id}`);
-                if (userRes.ok) {
-                    const userData = await userRes.json();
-                    setUser(userData.user);
-                }
-
-                // Fetch user's ads
-                const adsRes = await fetch(`/api/ads?userId=${resolvedParams.id}`);
-                if (adsRes.ok) {
-                    const adsData = await adsRes.json();
-                    setAds(adsData.ads || []);
-                }
-            } catch (error) {
-                console.error("Error fetching user:", error);
-            } finally {
-                setLoading(false);
+async function getUser(id: string) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+                avatar: true,
+                city: true,
+                bio: true,
+                rating: true,
+                totalReviews: true,
+                badges: true,
+                createdAt: true,
+                _count: { select: { ads: true } }
             }
-        }
-
-        fetchData();
-    }, [resolvedParams.id]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
-                <Header />
-                <main className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-[var(--foreground-muted)]">جاري التحميل...</p>
-                    </div>
-                </main>
-                <Footer />
-            </div>
-        );
+        });
+        return user;
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
     }
+}
+
+async function getUserAds(userId: string) {
+    try {
+        const ads = await prisma.ad.findMany({
+            where: {
+                userId,
+                status: "active"
+            },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+            include: {
+                category: { select: { name: true } }
+            }
+        });
+        return ads;
+    } catch (error) {
+        console.error("Error fetching user ads:", error);
+        return [];
+    }
+}
+
+export default async function UserProfilePage({ params }: Props) {
+    const { id } = await params;
+    const [user, ads] = await Promise.all([
+        getUser(id),
+        getUserAds(id)
+    ]);
 
     if (!user) {
         return (
@@ -163,7 +141,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                                             📅 عضو منذ {memberSince}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            📢 {user.totalAds} إعلان
+                                            📢 {user._count.ads} إعلان
                                         </span>
                                     </div>
                                 </div>
@@ -191,7 +169,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                                         key={ad.id}
                                         id={ad.id}
                                         title={ad.title}
-                                        price={ad.price}
+                                        price={Number(ad.price)}
                                         location={ad.district ? `${ad.district}, ${ad.city}` : ad.city}
                                         date={new Date(ad.createdAt).toLocaleDateString('ar-SA')}
                                         category={ad.category?.name || ""}
