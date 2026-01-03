@@ -1,0 +1,30 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Environment variables to set in Netlify Dashboard:
+# - DATABASE_URL
+# - NEXTAUTH_SECRET
+# - NEXTAUTH_URL
+# - CLOUDINARY_CLOUD_NAME (optional)
+# - CLOUDINARY_API_KEY (optional)
+# - CLOUDINARY_API_SECRET (optional)
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
