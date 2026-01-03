@@ -29,6 +29,7 @@ export default function NewAdPage() {
         neighborhood: "",
         location: "",
         phone: "",
+        carYear: "",
         images: [] as File[],
     });
 
@@ -167,6 +168,12 @@ export default function NewAdPage() {
             }
 
             // Create the ad
+            // Add car year to description if it's a car ad
+            let fullDescription = formData.description;
+            if (formData.category === "cars" && formData.carYear) {
+                fullDescription = `📅 سنة الصنع: ${formData.carYear}\n\n${formData.description}`;
+            }
+
             const response = await fetch("/api/ads", {
                 method: "POST",
                 headers: {
@@ -174,7 +181,7 @@ export default function NewAdPage() {
                 },
                 body: JSON.stringify({
                     title: formData.title,
-                    description: formData.description,
+                    description: fullDescription,
                     price: parseFloat(formData.price),
                     priceType: formData.priceType,
                     categorySlug: formData.category,
@@ -309,60 +316,70 @@ export default function NewAdPage() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-3">
-                                            اختر القسم <span className="text-[var(--error)]">*</span>
-                                        </label>
-                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                                            {categories.map((cat) => (
-                                                <button
-                                                    key={cat.id}
-                                                    type="button"
-                                                    onClick={() => setFormData(prev => ({ ...prev, category: cat.slug, subcategory: "" }))}
-                                                    className={`p-4 rounded-2xl border-2 transition-all duration-300 ${formData.category === cat.slug
-                                                        ? "border-[var(--primary)] bg-[var(--primary)]/5 shadow-lg scale-105"
-                                                        : "border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-secondary)]"
-                                                        }`}
-                                                >
-                                                    <div
-                                                        className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-2xl mb-2"
-                                                        style={{
-                                                            backgroundColor: formData.category === cat.slug ? cat.color : `${cat.color}15`
-                                                        }}
-                                                    >
-                                                        {cat.icon}
-                                                    </div>
-                                                    <span className={`text-xs font-medium block text-center ${formData.category === cat.slug ? "text-[var(--primary)]" : ""
-                                                        }`}>
-                                                        {cat.name}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2">
+                                                القسم الرئيسي <span className="text-[var(--error)]">*</span>
+                                            </label>
+                                            <select
+                                                name="category"
+                                                value={formData.category}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value, subcategory: "" }))}
+                                                className="input cursor-pointer"
+                                                required
+                                            >
+                                                <option value="">-- اختر القسم --</option>
+                                                {categories.map((cat) => (
+                                                    <option key={cat.id} value={cat.slug}>
+                                                        {cat.icon} {cat.name}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
+
+                                        {/* Subcategory Dropdown */}
+                                        {selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+                                            <div className="animate-fadeIn">
+                                                <label className="block text-sm font-semibold mb-2">
+                                                    القسم الفرعي
+                                                </label>
+                                                <select
+                                                    name="subcategory"
+                                                    value={formData.subcategory}
+                                                    onChange={handleChange}
+                                                    className="input cursor-pointer"
+                                                >
+                                                    <option value="">-- اختر القسم الفرعي --</option>
+                                                    {selectedCategory.subcategories.map((sub) => (
+                                                        <option key={sub.id} value={sub.slug}>
+                                                            {sub.icon || '📁'} {sub.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Subcategory Selection */}
-                                    {selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+                                    {/* Car Year - Only show for cars category */}
+                                    {formData.category === "cars" && (
                                         <div className="animate-fadeIn">
-                                            <label className="block text-sm font-semibold mb-3">
-                                                اختر القسم الفرعي (اختياري)
+                                            <label className="block text-sm font-semibold mb-2">
+                                                سنة الصنع <span className="text-[var(--error)]">*</span>
                                             </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedCategory.subcategories.map((sub) => (
-                                                    <button
-                                                        key={sub.id}
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, subcategory: sub.slug }))}
-                                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${formData.subcategory === sub.slug
-                                                            ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                                                            : "border-[var(--border)] hover:border-[var(--primary)]/50"
-                                                            }`}
-                                                    >
-                                                        <span>{sub.icon || '📁'}</span>
-                                                        <span className="text-sm font-medium">{sub.name}</span>
-                                                    </button>
+                                            <select
+                                                name="carYear"
+                                                value={formData.carYear}
+                                                onChange={handleChange}
+                                                className="input cursor-pointer"
+                                                required={formData.category === "cars"}
+                                            >
+                                                <option value="">-- اختر السنة --</option>
+                                                {Array.from({ length: 35 }, (_, i) => new Date().getFullYear() + 1 - i).map((year) => (
+                                                    <option key={year} value={year}>
+                                                        {year}
+                                                    </option>
                                                 ))}
-                                            </div>
+                                            </select>
                                         </div>
                                     )}
 
