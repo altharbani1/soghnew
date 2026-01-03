@@ -44,27 +44,7 @@
   --font-arabic: 'IBM Plex Sans Arabic', sans-serif;
 }
 
-/* Dark mode - both system preference and manual toggle */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0f172a;
-    --background-secondary: #1e293b;
-    --foreground: #f1f5f9;
-    --foreground-muted: #94a3b8;
-    --border: #334155;
-    --border-hover: #475569;
-  }
-}
-
-/* Manual dark mode override */
-:root.dark {
-  --background: #0f172a;
-  --background-secondary: #1e293b;
-  --foreground: #f1f5f9;
-  --foreground-muted: #94a3b8;
-  --border: #334155;
-  --border-hover: #475569;
-}
+/* Dark mode removed - always light mode */
 
 * {
   box-sizing: border-box;
@@ -266,11 +246,7 @@ a:hover {
   -webkit-backdrop-filter: blur(10px);
 }
 
-@media (prefers-color-scheme: dark) {
-  .glass {
-    background: rgba(15, 23, 42, 0.8);
-  }
-}
+
 
 /* Gradient backgrounds */
 .gradient-primary {
