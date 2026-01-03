@@ -141,8 +141,8 @@ export async function POST(request: NextRequest) {
             description,
             price,
             priceType,
-            categoryId,
-            subcategoryId,
+            categorySlug,
+            subcategorySlug,
             city,
             district,
             contactPhone,
@@ -152,12 +152,41 @@ export async function POST(request: NextRequest) {
         } = body
 
         // Validation
-        if (!title || !description || !price || !categoryId || !city || !contactPhone) {
+        if (!title || !description || price === undefined || !categorySlug || !city) {
             return NextResponse.json(
                 { error: "يرجى ملء جميع الحقول المطلوبة" },
                 { status: 400 }
             )
         }
+
+        // Find category by slug
+        const category = await prisma.category.findUnique({
+            where: { slug: categorySlug }
+        })
+
+        if (!category) {
+            return NextResponse.json(
+                { error: "القسم غير موجود" },
+                { status: 400 }
+            )
+        }
+
+        // Find subcategory if provided
+        let subcategoryId = null
+        if (subcategorySlug) {
+            const subcategory = await prisma.subcategory.findFirst({
+                where: {
+                    slug: subcategorySlug,
+                    categoryId: category.id
+                }
+            })
+            if (subcategory) {
+                subcategoryId = subcategory.id
+            }
+        }
+
+        // Get user's phone from session or use provided phone
+        const phone = contactPhone || session.user.phone
 
         // Create slug
         const slug = `${title.replace(/\s+/g, "-")}-${Date.now()}`
@@ -169,22 +198,22 @@ export async function POST(request: NextRequest) {
                 title,
                 description,
                 slug,
-                price,
+                price: parseFloat(price),
                 priceType: priceType || "fixed",
-                categoryId,
+                categoryId: category.id,
                 subcategoryId,
                 city,
                 district,
-                contactPhone,
+                contactPhone: phone,
                 contactWhatsapp,
                 publishedAt: new Date(),
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                 images: images?.length ? {
                     create: images.map((img: any, index: number) => ({
-                        imageUrl: img.url,
-                        thumbnailUrl: img.thumbnail,
-                        isPrimary: index === 0,
-                        displayOrder: index,
+                        imageUrl: img.imageUrl || img.url,
+                        thumbnailUrl: img.thumbnailUrl || img.thumbnail,
+                        isPrimary: img.isPrimary || index === 0,
+                        displayOrder: img.displayOrder || index,
                     }))
                 } : undefined,
                 dynamicFields: dynamicFields?.length ? {
@@ -214,7 +243,7 @@ export async function POST(request: NextRequest) {
 
         // Update category stats
         await prisma.category.update({
-            where: { id: categoryId },
+            where: { id: category.id },
             data: { totalAds: { increment: 1 } }
         })
 
