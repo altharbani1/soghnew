@@ -35,7 +35,7 @@ export default function ContactPage() {
                         </div>
 
                         {/* Content */}
-                        <div className="p-8">
+                        <div className="p-4 sm:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Contact Info */}
                                 <div className="space-y-6">

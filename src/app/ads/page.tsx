@@ -71,22 +71,22 @@ export default function AllAdsPage() {
             <main className="flex-1 py-6">
                 <div className="container">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div>
-                            <h1 className="text-2xl font-bold">جميع الإعلانات</h1>
-                            <p className="text-[var(--foreground-muted)]">
+                            <h1 className="text-xl sm:text-2xl font-bold">جميع الإعلانات</h1>
+                            <p className="text-sm text-[var(--foreground-muted)]">
                                 تصفح أحدث الإعلانات المنشورة
                             </p>
                         </div>
-                        <Link href="/ads/new" className="btn btn-primary">
+                        <Link href="/ads/new" className="btn btn-primary text-center">
                             ➕ أضف إعلان
                         </Link>
                     </div>
 
                     {/* Filters */}
                     <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-4 mb-6">
-                        <div className="flex flex-wrap gap-4">
-                            <div className="flex-1 min-w-[200px]">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-sm font-medium mb-1">المدينة</label>
                                 <select
                                     value={selectedCity}
@@ -99,7 +99,7 @@ export default function AllAdsPage() {
                                     ))}
                                 </select>
                             </div>
-                            <div className="flex-1 min-w-[200px]">
+                            <div>
                                 <label className="block text-sm font-medium mb-1">الترتيب</label>
                                 <select
                                     value={sortBy}
