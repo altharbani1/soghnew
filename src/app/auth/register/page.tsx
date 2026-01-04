@@ -143,7 +143,7 @@ export default function RegisterPage() {
                                             value={formData.name}
                                             onChange={handleChange}
                                             required
-                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
+                                            className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block pr-11 p-4 transition-all outline-none shadow-sm placeholder:text-gray-500 font-medium"
                                             placeholder="الاسم الثلاثي"
                                         />
                                     </div>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             required
                                             dir="ltr"
-                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none text-left shadow-sm hover:border-gray-400 placeholder:text-gray-400"
+                                            className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block pr-11 p-4 transition-all outline-none text-left shadow-sm placeholder:text-gray-500 font-medium"
                                             placeholder="name@example.com"
                                         />
                                     </div>
@@ -184,7 +184,7 @@ export default function RegisterPage() {
                                             required
                                             dir="ltr"
                                             maxLength={10}
-                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none text-left font-mono shadow-sm hover:border-gray-400"
+                                            className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block pr-11 p-4 transition-all outline-none text-left font-mono shadow-sm placeholder:text-gray-500 font-medium"
                                             placeholder="05xxxxxxxx"
                                         />
                                     </div>
@@ -205,7 +205,7 @@ export default function RegisterPage() {
                                                 onChange={handleChange}
                                                 required
                                                 minLength={6}
-                                                className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
+                                                className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block pr-11 p-4 transition-all outline-none shadow-sm placeholder:text-gray-500 font-medium"
                                                 placeholder="••••••••"
                                             />
                                         </div>
@@ -223,7 +223,7 @@ export default function RegisterPage() {
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
                                                 required
-                                                className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
+                                                className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block pr-11 p-4 transition-all outline-none shadow-sm placeholder:text-gray-500 font-medium"
                                                 placeholder="••••••••"
                                             />
                                         </div>
