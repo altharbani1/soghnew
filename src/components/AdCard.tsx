@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 interface AdCardProps {
     id: string;
@@ -35,12 +34,11 @@ export default function AdCard({
             <article className={`card group ${featured ? "ring-2 ring-[var(--accent)]" : ""}`}>
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--background-secondary)]">
-                    <Image
+                    <img
                         src={image}
                         alt={title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
                     />
                     {featured && (
                         <span className="absolute top-3 right-3 badge badge-warning">
@@ -77,3 +75,4 @@ export default function AdCard({
         </Link>
     );
 }
+
