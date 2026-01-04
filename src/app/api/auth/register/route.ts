@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Registration error:", error)
         return NextResponse.json(
-            { error: "حدث خطأ أثناء التسجيل" },
+            { error: `فشل التسجيل: ${error instanceof Error ? error.message : "خطأ غير معروف"}` },
             { status: 500 }
         )
     }
