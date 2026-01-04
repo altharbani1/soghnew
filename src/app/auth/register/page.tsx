@@ -91,52 +91,50 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50/50">
+        <div className="min-h-screen flex flex-col bg-slate-50">
             <Header />
 
             <main className="flex-1 flex items-center justify-center p-4 py-12 relative overflow-hidden">
                 {/* Background Decor */}
-                <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[var(--primary)]/5 to-transparent -z-10" />
-                <div className="absolute top-20 right-10 w-64 h-64 bg-[var(--secondary)]/10 rounded-full blur-3xl -z-10 animate-pulse" />
-                <div className="absolute bottom-20 left-10 w-64 h-64 bg-[var(--primary)]/10 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: "1s" }} />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
 
                 <div className="w-full max-w-lg">
                     {/* Header Text */}
                     <div className="text-center mb-8 animate-fadeIn">
-                        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold mb-2 text-gray-900">
                             إنشاء حساب جديد
                         </h1>
-                        <p className="text-[var(--foreground-muted)]">
+                        <p className="text-gray-600 font-medium">
                             أنشئ حسابك مجاناً وابدأ رحلتك في سوقه
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden animate-slideUp">
+                    <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden animate-slideUp">
                         {/* Progress Bar / Decorative Top */}
-                        <div className="h-1.5 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]" />
+                        <div className="h-2 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]" />
 
                         <div className="p-8">
                             {/* Alerts */}
                             {error && (
-                                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-3 border border-red-100 animate-shake">
+                                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl flex items-center gap-3 border border-red-200 animate-shake">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                                    <span className="text-sm font-medium">{error}</span>
+                                    <span className="text-sm font-bold">{error}</span>
                                 </div>
                             )}
 
                             {success && (
-                                <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-xl flex items-center gap-3 border border-green-100">
+                                <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl flex items-center gap-3 border border-green-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                                    <span className="text-sm font-medium">تم إنشاء الحساب بنجاح! جاري تحويلك...</span>
+                                    <span className="text-sm font-bold">تم إنشاء الحساب بنجاح! جاري تحويلك...</span>
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-5">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Name Input */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">الاسم الكامل</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-800">الاسم الكامل</label>
                                     <div className="relative group">
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[var(--primary)] transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                         </div>
                                         <input
@@ -145,17 +143,17 @@ export default function RegisterPage() {
                                             value={formData.name}
                                             onChange={handleChange}
                                             required
-                                            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block w-full pr-10 p-3 transition-all outline-none"
+                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
                                             placeholder="الاسم الثلاثي"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Email Input */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">البريد الإلكتروني</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-800">البريد الإلكتروني</label>
                                     <div className="relative group">
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[var(--primary)] transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
                                         </div>
                                         <input
@@ -165,17 +163,17 @@ export default function RegisterPage() {
                                             onChange={handleChange}
                                             required
                                             dir="ltr"
-                                            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block w-full pr-10 p-3 transition-all outline-none text-left"
+                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none text-left shadow-sm hover:border-gray-400 placeholder:text-gray-400"
                                             placeholder="name@example.com"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Phone Input */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">رقم الجوال</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-800">رقم الجوال</label>
                                     <div className="relative group">
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[var(--primary)] transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                                         </div>
                                         <input
@@ -186,7 +184,7 @@ export default function RegisterPage() {
                                             required
                                             dir="ltr"
                                             maxLength={10}
-                                            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block w-full pr-10 p-3 transition-all outline-none text-left font-mono"
+                                            className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none text-left font-mono shadow-sm hover:border-gray-400"
                                             placeholder="05xxxxxxxx"
                                         />
                                     </div>
@@ -194,10 +192,10 @@ export default function RegisterPage() {
 
                                 {/* Password Inputs Row */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">كلمة المرور</label>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-800">كلمة المرور</label>
                                         <div className="relative group">
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors">
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[var(--primary)] transition-colors">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                                             </div>
                                             <input
@@ -207,16 +205,16 @@ export default function RegisterPage() {
                                                 onChange={handleChange}
                                                 required
                                                 minLength={6}
-                                                className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block w-full pr-10 p-3 transition-all outline-none"
+                                                className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
                                                 placeholder="••••••••"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">تأكيد كلمة المرور</label>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-800">تأكيد كلمة المرور</label>
                                         <div className="relative group">
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors">
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[var(--primary)] transition-colors">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>
                                             </div>
                                             <input
@@ -225,7 +223,7 @@ export default function RegisterPage() {
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
                                                 required
-                                                className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block w-full pr-10 p-3 transition-all outline-none"
+                                                className="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent block pr-11 p-3.5 transition-all outline-none shadow-sm hover:border-gray-400"
                                                 placeholder="••••••••"
                                             />
                                         </div>
