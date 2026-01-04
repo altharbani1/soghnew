@@ -1,16 +1,18 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AdListItem from "@/components/AdListItem";
+import AdGridCard from "@/components/AdGridCard";
 import { categories, formatNumber, saudiCities } from "@/lib/data";
 import prisma from "@/lib/db";
+import { SearchBar } from "@/components/SearchBar";
+import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
 
 async function getAds() {
   try {
     const ads = await prisma.ad.findMany({
       where: { status: "active" },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 12,
       include: {
         user: {
           select: {
@@ -45,19 +47,18 @@ async function getFeaturedAds() {
         isFeatured: true
       },
       orderBy: { createdAt: "desc" },
-      take: 5,
+      take: 4,
       include: {
-        user: {
-          select: {
-            name: true,
-          }
-        },
         category: {
           select: {
             name: true,
             slug: true,
           }
         },
+        images: {
+          take: 1,
+          orderBy: { displayOrder: "asc" }
+        }
       }
     });
     return ads;
@@ -74,133 +75,72 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[var(--background-secondary)]">
+      {/* Structured Data for SEO */}
+      <OrganizationJsonLd />
+      <WebsiteJsonLd />
+
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="gradient-hero text-white py-12 md:py-16">
+        {/* Compact Hero with Unified Search */}
+        <section className="gradient-hero text-white py-6 md:py-8">
           <div className="container">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 animate-fadeIn">
+            <div className="max-w-2xl mx-auto text-center">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">
                 بيع واشتري بكل سهولة
               </h1>
-              <p className="text-lg opacity-90 mb-6">
-                أكبر منصة للإعلانات المبوبة في المملكة العربية السعودية
+              <p className="text-sm opacity-80 mb-4">
+                أكبر منصة للإعلانات المبوبة في السعودية
               </p>
 
-              {/* Search Box */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4">
-                <div className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="ابحث عن سيارة، شقة، جوال..."
-                      className="w-full px-5 py-3 rounded-xl bg-white text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:outline-none focus:ring-2 focus:ring-white/50"
-                    />
-                  </div>
-                  <select className="px-4 py-3 rounded-xl bg-white text-[var(--foreground)] focus:outline-none cursor-pointer">
-                    <option value="">كل المدن</option>
-                    {saudiCities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                  <button className="btn bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white px-6 py-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="m21 21-4.3-4.3" />
-                    </svg>
-                    بحث
-                  </button>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex flex-wrap justify-center gap-8 mt-8 text-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">+{recentAds.length > 0 ? recentAds.length : 50},000</div>
-                  <div className="text-white/80">إعلان نشط</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">+100,000</div>
-                  <div className="text-white/80">مستخدم</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">+{categories.length}</div>
-                  <div className="text-white/80">أقسام</div>
-                </div>
-              </div>
+              {/* Unified Search Bar */}
+              <SearchBar />
             </div>
           </div>
         </section>
 
-        {/* Categories Section */}
-        <section className="py-10 bg-[var(--background)]">
+        {/* Categories Grid - Compact */}
+        <section className="py-6 bg-[var(--background)]">
           <div className="container">
-            {/* Section Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white text-lg">
-                  📁
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold">تصفح الأقسام</h2>
-                  <p className="text-xs text-[var(--foreground-muted)]">اكتشف {categories.length} قسم رئيسي</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold">تصفح الأقسام</h2>
               <Link
                 href="/categories"
-                className="text-sm text-[var(--primary)] hover:underline flex items-center gap-1"
+                className="text-sm text-[var(--primary)] hover:underline"
               >
-                عرض الكل
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
+                عرض الكل ←
               </Link>
             </div>
 
-            {/* Categories Grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-3">
+            {/* Categories - Horizontal Scroll on Mobile, Grid on Desktop */}
+            <div className="flex md:grid md:grid-cols-6 lg:grid-cols-12 gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible scrollbar-hide">
               {categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  className="group flex flex-col items-center gap-2 p-4 rounded-2xl bg-[var(--background-secondary)] hover:bg-gradient-to-br hover:from-[var(--background)] hover:to-[var(--background-secondary)] border border-transparent hover:border-[var(--border)] hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  className="flex-shrink-0 w-20 md:w-auto group flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[var(--background-secondary)] hover:bg-[var(--primary)]/5 border border-transparent hover:border-[var(--primary)]/20 transition-all"
                 >
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 group-hover:shadow-lg transition-all duration-300"
-                    style={{
-                      backgroundColor: category.color,
-                      boxShadow: `0 4px 12px ${category.color}30`
-                    }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                    style={{ backgroundColor: `${category.color}20` }}
                   >
-                    <span className="drop-shadow-md">{category.icon}</span>
+                    {category.icon}
                   </div>
-                  <span className="text-sm font-semibold whitespace-nowrap text-center group-hover:text-[var(--primary)] transition-colors">{category.name}</span>
-                  <span
-                    className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{
-                      backgroundColor: `${category.color}15`,
-                      color: category.color
-                    }}
-                  >
-                    {formatNumber(category.count)}
-                  </span>
+                  <span className="text-xs font-medium text-center whitespace-nowrap">{category.name}</span>
                 </Link>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Featured Ads */}
+        {/* Featured Ads - Grid Cards */}
         {featuredAds.length > 0 && (
-          <section className="py-6 bg-[var(--background-secondary)]">
+          <section className="py-6">
             <div className="container">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  <span className="text-xl">⭐</span>
+                <h2 className="text-base font-bold flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-[var(--warning)]/20 flex items-center justify-center text-sm">⭐</span>
                   إعلانات مميزة
                 </h2>
                 <Link href="/ads?featured=true" className="text-sm text-[var(--primary)] hover:underline">
@@ -208,19 +148,17 @@ export default async function Home() {
                 </Link>
               </div>
 
-              <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {featuredAds.map((ad) => (
-                  <AdListItem
+                  <AdGridCard
                     key={ad.id}
                     id={ad.id}
                     title={ad.title}
                     price={Number(ad.price)}
                     location={ad.city}
                     date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                    category={ad.category.name}
-                    featured={ad.isFeatured}
-                    views={ad.viewsCount}
-                    commentsCount={ad.messagesCount}
+                    imageUrl={ad.images?.[0]?.imageUrl}
+                    featured={true}
                   />
                 ))}
               </div>
@@ -228,49 +166,47 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Recent Ads */}
-        <section className="py-6 bg-[var(--background-secondary)]">
+        {/* Recent Ads - Grid Cards */}
+        <section className="py-6">
           <div className="container">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">أحدث الإعلانات</h2>
+              <h2 className="text-base font-bold">أحدث الإعلانات</h2>
               <Link href="/ads" className="text-sm text-[var(--primary)] hover:underline">
                 عرض الكل ←
               </Link>
             </div>
 
-            <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
-              {recentAds.length > 0 ? (
-                recentAds.map((ad) => (
-                  <AdListItem
+            {recentAds.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {recentAds.map((ad) => (
+                  <AdGridCard
                     key={ad.id}
                     id={ad.id}
                     title={ad.title}
                     price={Number(ad.price)}
                     location={ad.city}
                     date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                    category={ad.category.name}
+                    imageUrl={ad.images?.[0]?.imageUrl}
                     featured={ad.isFeatured}
-                    views={ad.viewsCount}
-                    commentsCount={ad.messagesCount}
                   />
-                ))
-              ) : (
-                <div className="p-8 text-center">
-                  <div className="text-4xl mb-4">📝</div>
-                  <h3 className="font-bold text-lg mb-2">لا توجد إعلانات حالياً</h3>
-                  <p className="text-[var(--foreground-muted)] mb-4">كن أول من يضيف إعلان!</p>
-                  <Link href="/ads/new" className="btn btn-primary">
-                    أضف إعلانك الآن
-                  </Link>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] p-8 text-center">
+                <div className="text-4xl mb-4">📝</div>
+                <h3 className="font-bold text-lg mb-2">لا توجد إعلانات حالياً</h3>
+                <p className="text-[var(--foreground-muted)] mb-4">كن أول من يضيف إعلان!</p>
+                <Link href="/ads/new" className="btn btn-primary">
+                  أضف إعلانك الآن
+                </Link>
+              </div>
+            )}
 
             {/* Load More */}
             {recentAds.length > 0 && (
               <div className="text-center mt-6">
                 <Link href="/ads" className="btn btn-secondary">
-                  تحميل المزيد من الإعلانات
+                  عرض المزيد من الإعلانات
                 </Link>
               </div>
             )}
@@ -278,17 +214,18 @@ export default async function Home() {
         </section>
 
         {/* Quick Add CTA */}
-        <section className="py-8 bg-[var(--background)]">
+        <section className="py-8 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]">
           <div className="container">
-            <div className="gradient-primary rounded-2xl p-6 md:p-8 text-white text-center">
-              <h2 className="text-xl md:text-2xl font-bold mb-3">
-                عندك شي تبيعه؟
-              </h2>
-              <p className="opacity-90 mb-6 max-w-md mx-auto">
-                أضف إعلانك الآن مجاناً ووصل لآلاف المشترين
-              </p>
-              <Link href="/ads/new" className="btn bg-white text-[var(--primary)] hover:bg-white/90 px-8">
-                أضف إعلانك مجاناً
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white text-center md:text-right">
+              <div>
+                <h2 className="text-xl font-bold mb-1">عندك شي تبيعه؟</h2>
+                <p className="text-sm opacity-90">أضف إعلانك الآن مجاناً وابدأ البيع</p>
+              </div>
+              <Link
+                href="/ads/new"
+                className="btn bg-white text-[var(--primary)] hover:bg-white/90 px-8"
+              >
+                ✨ أضف إعلان مجاني
               </Link>
             </div>
           </div>

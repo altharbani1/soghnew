@@ -4,9 +4,75 @@ import Footer from "@/components/Footer";
 import prisma from "@/lib/db";
 import { notFound } from "next/navigation";
 import { AdDetailClient } from "./AdDetailClient";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import type { Metadata } from "next";
 
 interface Props {
     params: Promise<{ id: string }>;
+}
+
+// Generate dynamic metadata for SEO
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { id } = await params;
+
+    try {
+        const ad = await prisma.ad.findUnique({
+            where: { id },
+            select: {
+                title: true,
+                description: true,
+                price: true,
+                city: true,
+                category: { select: { name: true } },
+                images: { take: 1, orderBy: { isPrimary: 'desc' } },
+            },
+        });
+
+        if (!ad) {
+            return {
+                title: "إعلان غير موجود",
+                description: "هذا الإعلان غير متوفر أو تم حذفه",
+            };
+        }
+
+        const price = Number(ad.price).toLocaleString('ar-SA');
+        const description = ad.description?.slice(0, 160) || `${ad.title} - ${price} ريال في ${ad.city}`;
+        const imageUrl = ad.images?.[0]?.imageUrl || '/og-image.png';
+
+        return {
+            title: ad.title,
+            description: description,
+            keywords: [ad.title, ad.category?.name || '', ad.city, 'إعلان', 'بيع', 'شراء', 'سوقه'],
+            openGraph: {
+                title: ad.title,
+                description: description,
+                type: 'article',
+                locale: 'ar_SA',
+                images: [
+                    {
+                        url: imageUrl,
+                        width: 800,
+                        height: 600,
+                        alt: ad.title,
+                    },
+                ],
+            },
+            twitter: {
+                card: 'summary_large_image',
+                title: ad.title,
+                description: description,
+                images: [imageUrl],
+            },
+            alternates: {
+                canonical: `/ads/${id}`,
+            },
+        };
+    } catch (error) {
+        return {
+            title: "إعلان",
+            description: "تفاصيل الإعلان على سوقه",
+        };
+    }
 }
 
 async function getAd(id: string) {
@@ -101,5 +167,32 @@ export default async function AdDetailPage({ params }: Props) {
         }))
     };
 
-    return <AdDetailClient ad={adData} />;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://souqah.sa';
+
+    return (
+        <>
+            {/* Structured Data for SEO */}
+            <ProductJsonLd
+                name={ad.title}
+                description={ad.description || ''}
+                price={Number(ad.price)}
+                image={ad.images?.[0]?.imageUrl}
+                url={`${baseUrl}/ads/${ad.id}`}
+                sellerName={ad.user.name}
+                sellerRating={ad.user.rating}
+                sellerReviewCount={ad.user.totalReviews}
+                location={ad.city}
+                category={ad.category?.name || ''}
+                datePosted={ad.createdAt.toISOString()}
+            />
+            <BreadcrumbJsonLd
+                items={[
+                    { name: 'الرئيسية', url: baseUrl },
+                    { name: ad.category?.name || 'الأقسام', url: `${baseUrl}/categories/${ad.category?.slug}` },
+                    { name: ad.title, url: `${baseUrl}/ads/${ad.id}` },
+                ]}
+            />
+            <AdDetailClient ad={adData} />
+        </>
+    );
 }
