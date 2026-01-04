@@ -36,7 +36,7 @@ export default function NewAdPage() {
     // Set phone from session when available
     useEffect(() => {
         if (session?.user?.phone) {
-            setFormData(prev => ({ ...prev, phone: session.user.phone }));
+            setFormData(prev => ({ ...prev, phone: session.user.phone || "" }));
         }
     }, [session]);
 
