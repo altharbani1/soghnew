@@ -770,7 +770,8 @@ export const formatPrice = (price: number): string => {
     }).format(price);
 };
 
-export const formatNumber = (num: number): string => {
+export const formatNumber = (num: number | string): string => {
+    if (typeof num === "string") return num;
     return new Intl.NumberFormat("ar-SA").format(num);
 };
 
