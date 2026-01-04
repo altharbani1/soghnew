@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Upload error:", error)
         return NextResponse.json(
-            { error: "حدث خطأ أثناء رفع الصورة" },
+            { error: `فشل رفع الصورة: ${error instanceof Error ? error.message : "خطأ غير معروف"}` },
             { status: 500 }
         )
     }
