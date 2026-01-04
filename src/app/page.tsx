@@ -1,8 +1,9 @@
+// ... (imports remain similar, but remove categories from lib/data if not used)
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdGridCard from "@/components/AdGridCard";
-import { categories, formatNumber, saudiCities } from "@/lib/data";
+import { formatNumber, saudiCities } from "@/lib/data"; // Removed categories
 import prisma from "@/lib/db";
 import { SearchBar } from "@/components/SearchBar";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
@@ -73,10 +74,25 @@ async function getFeaturedAds() {
   }
 }
 
+async function getCategories() {
+  try {
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: "asc" },
+      take: 12
+    });
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const [recentAds, featuredAds] = await Promise.all([
+  const [recentAds, featuredAds, categories] = await Promise.all([
     getAds(),
-    getFeaturedAds()
+    getFeaturedAds(),
+    getCategories()
   ]);
 
   return (
@@ -128,9 +144,9 @@ export default async function Home() {
                 >
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                    style={{ backgroundColor: `${category.color}20` }}
+                    style={{ backgroundColor: `${category.color || '#cccccc'}20`, color: category.color || 'inherit' }}
                   >
-                    {category.icon}
+                    {category.icon || "📁"}
                   </div>
                   <span className="text-xs font-medium text-center whitespace-nowrap">{category.name}</span>
                 </Link>
