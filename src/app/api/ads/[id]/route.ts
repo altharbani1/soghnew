@@ -130,9 +130,11 @@ export async function PUT(
             contactPhone,
             contactWhatsapp,
             status,
+            images,
         } = body
 
-        const ad = await prisma.ad.update({
+        // First update the ad basic info
+        await prisma.ad.update({
             where: { id },
             data: {
                 title,
@@ -146,16 +148,46 @@ export async function PUT(
                 status,
                 soldAt: status === "sold" ? new Date() : undefined,
             },
+        });
+
+        // Update images if provided
+        if (images && Array.isArray(images)) {
+            // Transaction to ensure atomicity
+            await prisma.$transaction(async (tx) => {
+                // Delete existing images
+                await tx.adImage.deleteMany({
+                    where: { adId: id }
+                });
+
+                // Create new images
+                if (images.length > 0) {
+                    await tx.adImage.createMany({
+                        data: images.map((img: any, index: number) => ({
+                            adId: id,
+                            imageUrl: img.imageUrl,
+                            isPrimary: index === 0,
+                            displayOrder: index,
+                        }))
+                    });
+                }
+            });
+        }
+
+        // Fetch updated ad with relations to return
+        const updatedAd = await prisma.ad.findUnique({
+            where: { id },
             include: {
                 category: true,
                 subcategory: true,
-                images: true,
+                images: {
+                    orderBy: { displayOrder: 'asc' },
+                },
             }
-        })
+        });
 
         return NextResponse.json({
             message: "تم تحديث الإعلان بنجاح",
-            ad
+            ad: updatedAd
         })
 
     } catch (error) {
