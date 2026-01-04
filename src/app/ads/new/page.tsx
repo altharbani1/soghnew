@@ -165,7 +165,8 @@ export default function NewAdPage() {
                     const uploadData = await uploadRes.json();
                     imageUrls.push(uploadData.url);
                 } else {
-                    console.error("Image upload failed:", await uploadRes.text());
+                    const errorData = await uploadRes.json();
+                    throw new Error(errorData.error || "فشل رفع الصورة");
                 }
             }
 
@@ -211,7 +212,8 @@ export default function NewAdPage() {
             router.push("/");
             router.refresh();
         } catch (err) {
-            setError("حدث خطأ غير متوقع");
+            console.error("Submit error:", err);
+            setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
         } finally {
             setIsSubmitting(false);
         }
