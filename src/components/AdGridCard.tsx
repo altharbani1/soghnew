@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 interface AdGridCardProps {
     id: string;
@@ -9,6 +8,7 @@ interface AdGridCardProps {
     date: string;
     imageUrl?: string;
     featured?: boolean;
+    sellerName?: string;
 }
 
 export default function AdGridCard({
@@ -19,6 +19,7 @@ export default function AdGridCard({
     date,
     imageUrl,
     featured = false,
+    sellerName,
 }: AdGridCardProps) {
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("ar-SA", {
@@ -34,12 +35,11 @@ export default function AdGridCard({
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--background-secondary)]">
                     {imageUrl ? (
-                        <Image
+                        <img
                             src={imageUrl}
                             alt={title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl text-[var(--foreground-muted)]">
@@ -73,8 +73,20 @@ export default function AdGridCard({
                         </span>
                         <span>{date}</span>
                     </div>
+
+                    {/* Seller Name */}
+                    {sellerName && (
+                        <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center gap-1 text-xs text-[var(--foreground-muted)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span className="truncate">{sellerName}</span>
+                        </div>
+                    )}
                 </div>
             </article>
         </Link>
     );
 }
+

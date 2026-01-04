@@ -217,7 +217,7 @@ export default function NewAdPage() {
 
     const isStep1Valid = formData.title && formData.category;
     const isStep2Valid = formData.description && formData.price;
-    const isStep3Valid = formData.city && formData.neighborhood && formData.phone;
+    const isStep3Valid = formData.city && formData.phone && (formData.category !== "realestate" || formData.neighborhood);
 
     const stepLabels = ["المعلومات الأساسية", "التفاصيل والصور", "التواصل والنشر"];
 
@@ -593,27 +593,29 @@ export default function NewAdPage() {
                                                 ))}
                                             </select>
                                         </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold mb-2">
-                                                الحي <span className="text-[var(--error)]">*</span>
-                                            </label>
-                                            <select
-                                                name="neighborhood"
-                                                value={formData.neighborhood}
-                                                onChange={handleChange}
-                                                className="input cursor-pointer"
-                                                disabled={!formData.city}
-                                                required
-                                            >
-                                                <option value="">{formData.city ? "اختر الحي" : "اختر المدينة أولاً"}</option>
-                                                {availableNeighborhoods.map((neighborhood) => (
-                                                    <option key={neighborhood} value={neighborhood}>
-                                                        {neighborhood}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        {/* Neighborhood - Only for Real Estate */}
+                                        {formData.category === "realestate" && (
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2">
+                                                    الحي <span className="text-[var(--error)]">*</span>
+                                                </label>
+                                                <select
+                                                    name="neighborhood"
+                                                    value={formData.neighborhood}
+                                                    onChange={handleChange}
+                                                    className="input cursor-pointer"
+                                                    disabled={!formData.city}
+                                                    required={formData.category === "realestate"}
+                                                >
+                                                    <option value="">{formData.city ? "اختر الحي" : "اختر المدينة أولاً"}</option>
+                                                    {availableNeighborhoods.map((neighborhood) => (
+                                                        <option key={neighborhood} value={neighborhood}>
+                                                            {neighborhood}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div>

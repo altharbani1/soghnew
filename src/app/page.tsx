@@ -49,6 +49,11 @@ async function getFeaturedAds() {
       orderBy: { createdAt: "desc" },
       take: 4,
       include: {
+        user: {
+          select: {
+            name: true,
+          }
+        },
         category: {
           select: {
             name: true,
@@ -159,6 +164,7 @@ export default async function Home() {
                     date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
                     imageUrl={ad.images?.[0]?.imageUrl}
                     featured={true}
+                    sellerName={ad.user?.name}
                   />
                 ))}
               </div>
@@ -188,6 +194,7 @@ export default async function Home() {
                     date={new Date(ad.createdAt).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
                     imageUrl={ad.images?.[0]?.imageUrl}
                     featured={ad.isFeatured}
+                    sellerName={ad.user?.name}
                   />
                 ))}
               </div>

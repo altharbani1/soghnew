@@ -48,20 +48,21 @@ export default function EditAdPage({ params }: Props) {
                     setError("الإعلان غير موجود");
                     return;
                 }
-                const data = await res.json();
+                const jsonData = await res.json();
+                const data = jsonData.ad || jsonData; // Handle both formats
 
-                // Check ownership
+                // Check ownership - compare with session user id
                 if (session?.user?.id !== data.userId) {
                     setError("غير مصرح لك بتعديل هذا الإعلان");
                     return;
                 }
 
-                // Find category slug from name
-                const category = categories.find(c => c.name === data.category?.name);
+                // Find category slug from name or slug
+                const category = categories.find(c => c.name === data.category?.name || c.slug === data.category?.slug);
 
                 setFormData({
                     title: data.title || "",
-                    category: category?.slug || "",
+                    category: category?.slug || data.category?.slug || "",
                     subcategory: "",
                     description: data.description || "",
                     price: data.price?.toString() || "",
@@ -77,17 +78,20 @@ export default function EditAdPage({ params }: Props) {
                 if (data.images && data.images.length > 0) {
                     setExistingImages(data.images.map((img: { imageUrl: string }) => img.imageUrl));
                 }
+
+                setIsLoading(false);
             } catch (err) {
                 setError("حدث خطأ أثناء جلب بيانات الإعلان");
-            } finally {
                 setIsLoading(false);
             }
         };
 
-        if (session?.user?.id) {
+        if (status === "authenticated" && session?.user?.id) {
             fetchAd();
+        } else if (status === "unauthenticated") {
+            setIsLoading(false);
         }
-    }, [id, session?.user?.id]);
+    }, [id, session?.user?.id, status]);
 
     // Update neighborhoods when city changes
     useEffect(() => {
@@ -398,25 +402,28 @@ export default function EditAdPage({ params }: Props) {
                                     </select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2">
-                                        الحي
-                                    </label>
-                                    <select
-                                        name="neighborhood"
-                                        value={formData.neighborhood}
-                                        onChange={handleChange}
-                                        className="input cursor-pointer"
-                                        disabled={!formData.city}
-                                    >
-                                        <option value="">{formData.city ? "اختر الحي" : "اختر المدينة أولاً"}</option>
-                                        {availableNeighborhoods.map((neighborhood) => (
-                                            <option key={neighborhood} value={neighborhood}>
-                                                {neighborhood}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                {/* Neighborhood - Only for Real Estate */}
+                                {formData.category === "realestate" && (
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-2">
+                                            الحي
+                                        </label>
+                                        <select
+                                            name="neighborhood"
+                                            value={formData.neighborhood}
+                                            onChange={handleChange}
+                                            className="input cursor-pointer"
+                                            disabled={!formData.city}
+                                        >
+                                            <option value="">{formData.city ? "اختر الحي" : "اختر المدينة أولاً"}</option>
+                                            {availableNeighborhoods.map((neighborhood) => (
+                                                <option key={neighborhood} value={neighborhood}>
+                                                    {neighborhood}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Phone */}
