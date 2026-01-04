@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { auth } from "@/lib/auth"
 
-// GET - Get user's messages (conversations)
-export async function GET() {
+// GET - Get user's messages (conversations or specific chat)
+export async function GET(request: NextRequest) {
     try {
         const session = await auth()
 
@@ -14,7 +14,42 @@ export async function GET() {
             )
         }
 
-        // Get all conversations (grouped by ad and other user)
+        const { searchParams } = new URL(request.url)
+        const adId = searchParams.get("adId")
+        const otherUserId = searchParams.get("otherUserId")
+
+        // If params provided, fetch specific chat messages
+        if (adId && otherUserId) {
+            const messages = await prisma.message.findMany({
+                where: {
+                    adId,
+                    OR: [
+                        { senderId: session.user.id, receiverId: otherUserId },
+                        { senderId: otherUserId, receiverId: session.user.id }
+                    ]
+                },
+                orderBy: { createdAt: "asc" },
+                include: {
+                    sender: { select: { id: true, name: true, avatar: true } },
+                    receiver: { select: { id: true, name: true, avatar: true } }
+                }
+            });
+
+            // Mark as read
+            await prisma.message.updateMany({
+                where: {
+                    adId,
+                    senderId: otherUserId,
+                    receiverId: session.user.id,
+                    isRead: false
+                },
+                data: { isRead: true, readAt: new Date() }
+            });
+
+            return NextResponse.json({ messages });
+        }
+
+        // Otherwise, Get all conversations (grouped by ad and other user)
         const messages = await prisma.message.findMany({
             where: {
                 OR: [
@@ -58,6 +93,7 @@ export async function GET() {
             if (!conversations[key]) {
                 const otherUser = msg.senderId === session.user!.id ? msg.receiver : msg.sender
                 conversations[key] = {
+                    key, // Unique key for frontend
                     adId: msg.adId,
                     ad: msg.ad,
                     otherUser,
