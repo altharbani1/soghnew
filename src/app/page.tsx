@@ -8,6 +8,8 @@ import prisma from "@/lib/db";
 import { SearchBar } from "@/components/SearchBar";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
 
+export const dynamic = "force-dynamic";
+
 async function getAds() {
   try {
     const ads = await prisma.ad.findMany({
@@ -29,7 +31,7 @@ async function getAds() {
         },
         images: {
           take: 1,
-          orderBy: { displayOrder: "asc" }
+          orderBy: { isPrimary: "desc" }
         }
       }
     });
@@ -63,7 +65,7 @@ async function getFeaturedAds() {
         },
         images: {
           take: 1,
-          orderBy: { displayOrder: "asc" }
+          orderBy: { isPrimary: "desc" }
         }
       }
     });
