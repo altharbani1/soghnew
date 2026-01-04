@@ -230,6 +230,12 @@ export function AdDetailClient({ ad }: Props) {
                                 {/* Owner Actions */}
                                 {isOwner && (
                                     <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-2">
+                                        <Link
+                                            href={`/ads/${ad.id}/edit`}
+                                            className="btn btn-primary w-full text-sm flex items-center justify-center gap-2"
+                                        >
+                                            ✏️ تعديل الإعلان
+                                        </Link>
                                         <button onClick={handleRefresh} className="btn btn-secondary w-full text-sm">
                                             🔄 تحديث الإعلان
                                         </button>
