@@ -8,24 +8,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         Credentials({
             name: "credentials",
             credentials: {
-                phone: { label: "رقم الجوال", type: "tel" },
-                password: { label: "كلمة المرور", type: "password" }
+                phone: { label: "رقم الجوال أو البريد", type: "text" },
+                password: { label: "كلمة المرور", type: "password" },
+                email: { label: "البريد الإلكتروني", type: "email" }
             },
             async authorize(credentials) {
-                if (!credentials?.phone || !credentials?.password) {
-                    throw new Error("يرجى إدخال رقم الجوال وكلمة المرور")
+                const identifier = (credentials?.phone || credentials?.email) as string;
+                const password = credentials?.password as string;
+
+                if (!identifier || !password) {
+                    throw new Error("يرجى إدخال بيانات الدخول")
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { phone: credentials.phone as string }
+                const user = await prisma.user.findFirst({
+                    where: {
+                        OR: [
+                            { phone: identifier },
+                            { email: identifier }
+                        ]
+                    }
                 })
 
                 if (!user) {
-                    throw new Error("رقم الجوال غير مسجل")
+                    throw new Error("الحساب غير مسجل")
                 }
 
                 const isPasswordValid = await bcrypt.compare(
-                    credentials.password as string,
+                    password,
                     user.password
                 )
 
@@ -49,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     email: user.email,
                     phone: user.phone,
                     image: user.avatar,
+                    role: user.role,
                 }
             }
         })
@@ -57,14 +67,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id
-                token.phone = (user as any).phone
+                token.phone = user.phone
+                token.role = user.role
             }
             return token
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string
-                (session.user as any).phone = token.phone
+                session.user.phone = token.phone
+                session.user.role = token.role
             }
             return session
         }
