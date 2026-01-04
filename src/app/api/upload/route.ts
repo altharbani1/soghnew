@@ -3,7 +3,7 @@ import { v2 as cloudinary } from "cloudinary"
 
 // Configure Cloudinary
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "detddvxt1",
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 })
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if Cloudinary is configured
-        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
             return NextResponse.json(
                 { error: "خدمة رفع الصور غير مُعدّة" },
                 { status: 500 }
