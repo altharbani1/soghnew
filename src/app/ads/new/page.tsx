@@ -164,6 +164,8 @@ export default function NewAdPage() {
                 if (uploadRes.ok) {
                     const uploadData = await uploadRes.json();
                     imageUrls.push(uploadData.url);
+                } else {
+                    console.error("Image upload failed:", await uploadRes.text());
                 }
             }
 
