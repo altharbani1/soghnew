@@ -256,6 +256,13 @@ export default function ProfilePage() {
                                                 >
                                                     👁️
                                                 </Link>
+                                                <Link
+                                                    href={`/ads/${ad.id}/edit`}
+                                                    className="p-2 rounded-lg bg-[var(--secondary)]/10 text-[var(--secondary)] hover:bg-[var(--secondary)]/20"
+                                                    title="تعديل"
+                                                >
+                                                    ✏️
+                                                </Link>
                                                 <button
                                                     onClick={() => handleDeleteAd(ad.id)}
                                                     disabled={deletingId === ad.id}
