@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import AuthLayout from "@/components/auth/AuthLayout";
+import AuthInput from "@/components/auth/AuthInput";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
@@ -39,68 +39,53 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
-            <Header />
+        <AuthLayout
+            title="نسيت كلمة المرور؟"
+            subtitle="أدخل بريدك الإلكتروني لاستعادة حسابك"
+            backButton={true}
+        >
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <AuthInput
+                    label="البريد الإلكتروني"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    dir="ltr"
+                    placeholder="name@example.com"
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>}
+                />
 
-            <main className="flex-1 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
-
-                <div className="w-full max-w-md">
-                    <div className="text-center mb-8 animate-fadeIn">
-                        <Link href="/auth/login" className="inline-block mb-4 text-[var(--primary)] font-bold hover:underline">
-                            &larr; العودة لتسجيل الدخول
-                        </Link>
-                        <h1 className="text-3xl font-bold mb-2 text-gray-900">
-                            نسيت كلمة المرور؟
-                        </h1>
-                        <p className="text-gray-600 font-medium">
-                            أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيينها
-                        </p>
+                {error && (
+                    <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                        {error}
                     </div>
+                )}
 
-                    <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden animate-slideUp">
-                        <div className="h-2 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]" />
-
-                        <div className="p-8">
-                            {error && (
-                                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl flex items-center gap-3 border border-red-200">
-                                    <span className="text-sm font-bold">{error}</span>
-                                </div>
-                            )}
-
-                            {message && (
-                                <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl flex items-center gap-3 border border-green-200">
-                                    <span className="text-sm font-bold">{message}</span>
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-800">البريد الإلكتروني</label>
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        dir="ltr"
-                                        className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block p-4 transition-all outline-none text-left shadow-sm placeholder:text-gray-500 font-medium"
-                                        placeholder="name@example.com"
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full text-white bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-[var(--primary)]/30 font-bold rounded-xl text-md px-5 py-3.5 text-center transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-[var(--primary)]/20 hover:shadow-xl hover:shadow-[var(--primary)]/30 transform hover:-translate-y-0.5 active:translate-y-0"
-                                >
-                                    {isLoading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
-                                </button>
-                            </form>
-                        </div>
+                {message && (
+                    <div className="p-4 bg-green-50 text-green-700 text-sm rounded-xl flex items-center gap-2 border border-green-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                        {message}
                     </div>
-                </div>
-            </main>
-            <Footer />
-        </div>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {isLoading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
+                </button>
+
+                <p className="text-center text-sm text-gray-600 mt-6">
+                    تذكرت كلمة المرور؟{" "}
+                    <Link href="/auth/login" className="text-indigo-600 font-bold hover:underline">
+                        سجل دخولك
+                    </Link>
+                </p>
+            </form>
+        </AuthLayout>
     );
 }

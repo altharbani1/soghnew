@@ -2,9 +2,8 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import AuthLayout from "@/components/auth/AuthLayout";
+import AuthInput from "@/components/auth/AuthInput";
 
 function ResetPasswordForm() {
     const router = useRouter();
@@ -62,84 +61,63 @@ function ResetPasswordForm() {
     }
 
     return (
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden animate-slideUp">
-            <div className="h-2 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <AuthInput
+                label="كلمة المرور الجديدة"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+            />
 
-            <div className="p-8">
-                {error && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl flex items-center gap-3 border border-red-200">
-                        <span className="text-sm font-bold">{error}</span>
-                    </div>
-                )}
+            <AuthInput
+                label="تأكيد كلمة المرور"
+                name="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>}
+            />
 
-                {message && (
-                    <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl flex items-center gap-3 border border-green-200">
-                        <span className="text-sm font-bold">{message}</span>
-                    </div>
-                )}
+            {error && (
+                <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    {error}
+                </div>
+            )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-800">كلمة المرور الجديدة</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block p-4 transition-all outline-none shadow-sm placeholder:text-gray-500 font-medium"
-                            placeholder="••••••••"
-                        />
-                    </div>
+            {message && (
+                <div className="p-4 bg-green-50 text-green-700 text-sm rounded-xl flex items-center gap-2 border border-green-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                    {message}
+                </div>
+            )}
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-800">تأكيد كلمة المرور</label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                            className="w-full bg-gray-50 border border-gray-400 text-gray-900 text-base rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] block p-4 transition-all outline-none shadow-sm placeholder:text-gray-500 font-medium"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full text-white bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-[var(--primary)]/30 font-bold rounded-xl text-md px-5 py-3.5 text-center transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-[var(--primary)]/20 hover:shadow-xl hover:shadow-[var(--primary)]/30 transform hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                        {isLoading ? "جاري التحديث..." : "تغيير كلمة المرور"}
-                    </button>
-                </form>
-            </div>
-        </div>
+            <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+                {isLoading ? "جاري التحديث..." : "تغيير كلمة المرور"}
+            </button>
+        </form>
     );
 }
 
 export default function ResetPasswordPage() {
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
-            <Header />
-
-            <main className="flex-1 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
-
-                <div className="w-full max-w-md">
-                    <div className="text-center mb-8 animate-fadeIn">
-                        <h1 className="text-3xl font-bold mb-2 text-gray-900">
-                            استعادة كلمة المرور
-                        </h1>
-                        <p className="text-gray-600 font-medium">
-                            أدخل كلمة المرور الجديدة
-                        </p>
-                    </div>
-
-                    <Suspense fallback={<div className="text-center">جاري التحميل...</div>}>
-                        <ResetPasswordForm />
-                    </Suspense>
-                </div>
-            </main>
-            <Footer />
-        </div>
+        <AuthLayout
+            title="استعادة كلمة المرور"
+            subtitle="أدخل كلمة المرور الجديدة لحسابك"
+        >
+            <Suspense fallback={<div className="text-center p-8 text-gray-500">جاري التحميل...</div>}>
+                <ResetPasswordForm />
+            </Suspense>
+        </AuthLayout>
     );
 }
