@@ -10,8 +10,13 @@ export async function GET(
     try {
         const { id } = await params
 
-        const ad = await prisma.ad.findUnique({
-            where: { id },
+        const ad = await prisma.ad.findFirst({
+            where: {
+                OR: [
+                    { id },
+                    { slug: id }
+                ]
+            },
             include: {
                 user: {
                     select: {

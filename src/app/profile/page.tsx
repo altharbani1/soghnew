@@ -11,6 +11,7 @@ import { formatPrice } from "@/lib/data";
 interface Ad {
     id: string;
     title: string;
+    slug?: string; // Add slug field
     price: number;
     city: string;
     district?: string;
@@ -234,7 +235,7 @@ export default function ProfilePage() {
 
                                             {/* Info */}
                                             <div className="flex-1 min-w-0">
-                                                <Link href={`/ads/${ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
+                                                <Link href={`/ads/${ad.slug || ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
                                                     {ad.title}
                                                 </Link>
                                                 <div className="text-lg font-bold text-[var(--primary)]">
@@ -250,14 +251,14 @@ export default function ProfilePage() {
                                             {/* Actions */}
                                             <div className="flex gap-2">
                                                 <Link
-                                                    href={`/ads/${ad.id}`}
+                                                    href={`/ads/${ad.slug || ad.id}`}
                                                     className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20"
                                                     title="عرض"
                                                 >
                                                     👁️
                                                 </Link>
                                                 <Link
-                                                    href={`/ads/${ad.id}/edit`}
+                                                    href={`/ads/${ad.slug || ad.id}/edit`}
                                                     className="p-2 rounded-lg bg-[var(--secondary)]/10 text-[var(--secondary)] hover:bg-[var(--secondary)]/20"
                                                     title="تعديل"
                                                 >
@@ -305,7 +306,7 @@ export default function ProfilePage() {
                                                     <div className="w-full h-full flex items-center justify-center text-3xl">📷</div>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <Link href={`/ads/${ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
+                                                    <Link href={`/ads/${ad.slug || ad.id}`} className="font-semibold hover:text-[var(--primary)] block truncate">
                                                         {ad.title}
                                                     </Link>
                                                     <div className="text-lg font-bold text-[var(--primary)]">

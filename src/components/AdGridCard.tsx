@@ -2,6 +2,7 @@ import Link from "next/link";
 
 interface AdGridCardProps {
     id: string;
+    slug?: string | null;
     title: string;
     price: number;
     location: string;
@@ -13,6 +14,7 @@ interface AdGridCardProps {
 
 export default function AdGridCard({
     id,
+    slug,
     title,
     price,
     location,
@@ -30,7 +32,7 @@ export default function AdGridCard({
     };
 
     return (
-        <Link href={`/ads/${id}`} className="block">
+        <Link href={`/ads/${slug || id}`} className="block">
             <article className={`card group overflow-hidden ${featured ? "ring-2 ring-[var(--warning)]" : ""}`}>
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--background-secondary)]">

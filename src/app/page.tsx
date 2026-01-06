@@ -176,6 +176,7 @@ export default async function Home() {
                   <AdGridCard
                     key={ad.id}
                     id={ad.id}
+                    slug={ad.slug}
                     title={ad.title}
                     price={Number(ad.price)}
                     location={ad.city}
@@ -206,6 +207,7 @@ export default async function Home() {
                   <AdGridCard
                     key={ad.id}
                     id={ad.id}
+                    slug={ad.slug}
                     title={ad.title}
                     price={Number(ad.price)}
                     location={ad.city}

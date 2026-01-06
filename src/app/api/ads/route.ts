@@ -193,8 +193,10 @@ export async function POST(request: NextRequest) {
         // Get user's phone from session or use provided phone
         const phone = contactPhone || session.user.phone
 
-        // Create slug
-        const slug = `${title.replace(/\s+/g, "-")}-${Date.now()}`
+        // Create clean slug
+        const cleanTitle = title.trim().replace(/[^\u0621-\u064A0-9a-zA-Z\s]/g, '').replace(/\s+/g, '-');
+        const shortId = Math.floor(100000 + Math.random() * 900000); // 6 digit random number as "Ad ID"
+        const slug = `${cleanTitle}-${shortId}`;
 
         // Create ad
         const ad = await prisma.ad.create({

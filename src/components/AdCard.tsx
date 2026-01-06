@@ -2,6 +2,7 @@ import Link from "next/link";
 
 interface AdCardProps {
     id: string;
+    slug?: string | null;
     title: string;
     price: number;
     location: string;
@@ -13,6 +14,7 @@ interface AdCardProps {
 
 export default function AdCard({
     id,
+    slug,
     title,
     price,
     location,
@@ -30,7 +32,7 @@ export default function AdCard({
     };
 
     return (
-        <Link href={`/ads/${id}`} className="block">
+        <Link href={`/ads/${slug || id}`} className="block">
             <article className={`card group ${featured ? "ring-2 ring-[var(--accent)]" : ""}`}>
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--background-secondary)]">

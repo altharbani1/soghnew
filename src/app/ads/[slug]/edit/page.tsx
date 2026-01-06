@@ -10,11 +10,11 @@ import { categories, saudiCities, getNeighborhoods } from "@/lib/data";
 import { use } from "react";
 
 interface Props {
-    params: Promise<{ id: string }>;
+    params: Promise<{ slug: string }>;
 }
 
 export default function EditAdPage({ params }: Props) {
-    const { id } = use(params);
+    const { slug } = use(params);
     const router = useRouter();
     const { data: session, status } = useSession();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +25,7 @@ export default function EditAdPage({ params }: Props) {
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>([]);
     const [availableNeighborhoods, setAvailableNeighborhoods] = useState<string[]>([]);
+    const [adId, setAdId] = useState<string>(""); // Store actual ID for PUT request
     const [formData, setFormData] = useState({
         title: "",
         category: "",
@@ -43,7 +44,9 @@ export default function EditAdPage({ params }: Props) {
     useEffect(() => {
         const fetchAd = async () => {
             try {
-                const res = await fetch(`/api/ads/${id}`);
+                // Determine if slug is actually an ID (legacy or special case)
+                // The API now supports fetching by slug or ID
+                const res = await fetch(`/api/ads/${slug}`);
                 if (!res.ok) {
                     setError("الإعلان غير موجود");
                     return;
@@ -56,6 +59,8 @@ export default function EditAdPage({ params }: Props) {
                     setError("غير مصرح لك بتعديل هذا الإعلان");
                     return;
                 }
+
+                setAdId(data.id); // Save the real ID for updates
 
                 // Find category slug from name or slug
                 const category = categories.find(c => c.name === data.category?.name || c.slug === data.category?.slug);
@@ -91,7 +96,7 @@ export default function EditAdPage({ params }: Props) {
         } else if (status === "unauthenticated") {
             setIsLoading(false);
         }
-    }, [id, session?.user?.id, status]);
+    }, [slug, session?.user?.id, status]);
 
     // Update neighborhoods when city changes
     useEffect(() => {
@@ -229,8 +234,14 @@ export default function EditAdPage({ params }: Props) {
             // Combine existing and new images
             const allImages = [...existingImages, ...newImageUrls];
 
-            // Update the ad
-            const response = await fetch(`/api/ads/${id}`, {
+            // Update the ad using the REAL ID
+            // We use adId here because the PUT endpoint expects ID in URL (usually)
+            // But since our [id] route now supports slugs too (checked in findFirst),
+            // using the slug is risky if we change the title (and thus potentially the slug? no slug is unique).
+            // Safest is to use the adId we saved from fetching.
+            const targetId = adId || slug;
+
+            const response = await fetch(`/api/ads/${targetId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -259,8 +270,8 @@ export default function EditAdPage({ params }: Props) {
                 return;
             }
 
-            // Success - redirect to ad page
-            router.push(`/ads/${id}`);
+            // Success - redirect to ad page using current slug
+            router.push(`/ads/${slug}`);
             router.refresh();
         } catch (err) {
             setError("حدث خطأ غير متوقع");
@@ -537,7 +548,7 @@ export default function EditAdPage({ params }: Props) {
 
                             {/* Buttons */}
                             <div className="flex justify-between pt-6 border-t border-[var(--border)]">
-                                <Link href={`/ads/${id}`} className="btn btn-secondary">
+                                <Link href={`/ads/${slug}`} className="btn btn-secondary">
                                     إلغاء
                                 </Link>
                                 <button

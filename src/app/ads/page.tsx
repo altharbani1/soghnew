@@ -86,6 +86,7 @@ export default async function AllAdsPage({ searchParams }: Props) {
                                 <AdListItem
                                     key={ad.id}
                                     id={ad.id}
+                                    slug={ad.slug}
                                     title={ad.title}
                                     price={Number(ad.price)}
                                     location={ad.district ? `${ad.district}, ${ad.city}` : ad.city}

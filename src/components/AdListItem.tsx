@@ -2,6 +2,7 @@ import Link from "next/link";
 
 interface AdListItemProps {
     id: string;
+    slug?: string | null;
     title: string;
     price: number;
     location: string;
@@ -14,6 +15,7 @@ interface AdListItemProps {
 
 export default function AdListItem({
     id,
+    slug,
     title,
     price,
     location,
@@ -32,7 +34,7 @@ export default function AdListItem({
     };
 
     return (
-        <Link href={`/ads/${id}`} className="block">
+        <Link href={`/ads/${slug || id}`} className="block">
             <article
                 className={`
           group flex items-center gap-4 p-4 bg-[var(--background)] border-b border-[var(--border)]

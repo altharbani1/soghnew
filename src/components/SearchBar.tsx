@@ -18,6 +18,7 @@ interface Ad {
     title: string;
     price: number;
     city: string;
+    slug?: string; // Add slug
     category: {
         name: string;
         icon?: string;
@@ -53,7 +54,7 @@ export function SearchBar() {
                         title: ad.title,
                         subtitle: `${ad.price.toLocaleString("ar-SA")} ريال - ${ad.city}`,
                         icon: ad.category?.icon || "📦",
-                        href: `/ads/${ad.id}`,
+                        href: `/ads/${ad.slug || ad.id}`, // Use slug
                     }));
                     setResults(searchResults);
                 }

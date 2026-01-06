@@ -8,16 +8,21 @@ import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import type { Metadata } from "next";
 
 interface Props {
-    params: Promise<{ id: string }>;
+    params: Promise<{ slug: string }>;
 }
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { id } = await params;
+    const { slug } = await params;
 
     try {
-        const ad = await prisma.ad.findUnique({
-            where: { id },
+        const ad = await prisma.ad.findFirst({
+            where: {
+                OR: [
+                    { slug: slug },
+                    { id: slug } // Fallback for old links
+                ]
+            },
             select: {
                 title: true,
                 description: true,
@@ -64,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 images: [imageUrl],
             },
             alternates: {
-                canonical: `/ads/${id}`,
+                canonical: `/ads/${slug}`,
             },
         };
     } catch (error) {
@@ -75,16 +80,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 }
 
-async function getAd(id: string) {
+async function getAd(slug: string) {
     try {
-        // Update view count
-        await prisma.ad.update({
-            where: { id },
-            data: { viewsCount: { increment: 1 } }
-        }).catch(() => { });
-
-        const ad = await prisma.ad.findUnique({
-            where: { id },
+        const ad = await prisma.ad.findFirst({
+            where: {
+                OR: [
+                    { slug: slug },
+                    { id: slug } // Fallback for old links
+                ]
+            },
             include: {
                 category: { select: { name: true, slug: true } },
                 subcategory: { select: { name: true } },
@@ -104,6 +108,14 @@ async function getAd(id: string) {
             }
         });
 
+        if (ad) {
+            // Update view count
+            await prisma.ad.update({
+                where: { id: ad.id },
+                data: { viewsCount: { increment: 1 } }
+            }).catch(() => { });
+        }
+
         return ad;
     } catch (error) {
         console.error("Error fetching ad:", error);
@@ -112,8 +124,8 @@ async function getAd(id: string) {
 }
 
 export default async function AdDetailPage({ params }: Props) {
-    const { id } = await params;
-    const ad = await getAd(id);
+    const { slug } = await params;
+    const ad = await getAd(slug);
 
     if (!ad) {
         return (
@@ -138,7 +150,7 @@ export default async function AdDetailPage({ params }: Props) {
     const adData = {
         id: ad.id,
         title: ad.title,
-        slug: ad.slug,
+        slug: ad.slug || ad.id, // Fallback to ID if slug is missing
         description: ad.description,
         price: Number(ad.price),
         priceType: ad.priceType,
@@ -177,7 +189,7 @@ export default async function AdDetailPage({ params }: Props) {
                 description={ad.description || ''}
                 price={Number(ad.price)}
                 image={ad.images?.[0]?.imageUrl}
-                url={`${baseUrl}/ads/${ad.id}`}
+                url={`${baseUrl}/ads/${ad.slug || ad.id}`}
                 sellerName={ad.user.name}
                 sellerRating={ad.user.rating}
                 sellerReviewCount={ad.user.totalReviews}
@@ -189,7 +201,7 @@ export default async function AdDetailPage({ params }: Props) {
                 items={[
                     { name: 'الرئيسية', url: baseUrl },
                     { name: ad.category?.name || 'الأقسام', url: `${baseUrl}/categories/${ad.category?.slug}` },
-                    { name: ad.title, url: `${baseUrl}/ads/${ad.id}` },
+                    { name: ad.title, url: `${baseUrl}/ads/${ad.slug || ad.id}` },
                 ]}
             />
             <AdDetailClient ad={adData} />

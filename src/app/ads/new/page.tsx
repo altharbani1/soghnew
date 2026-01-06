@@ -208,8 +208,9 @@ export default function NewAdPage() {
                 return;
             }
 
-            // Success - redirect to home
-            router.push("/");
+            // Success - redirect to ad page
+            const adSlug = data.ad.slug || data.ad.id;
+            router.push(`/ads/${adSlug}`);
             router.refresh();
         } catch (err) {
             console.error("Submit error:", err);
