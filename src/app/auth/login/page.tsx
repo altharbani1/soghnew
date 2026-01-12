@@ -80,13 +80,10 @@ export default function LoginPage() {
                         {/* Identifier Input */}
                         <div className="space-y-1">
                             <div className="relative group">
-                                <div className="absolute top-0 bottom-0 right-4 flex items-center justify-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                </div>
                                 <input
                                     type="text"
                                     {...register("identifier")}
-                                    className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]"
+                                    className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]"
                                     placeholder="البريد الإلكتروني أو اسم المستخدم"
                                 />
                             </div>
@@ -96,13 +93,10 @@ export default function LoginPage() {
                         {/* Password Input */}
                         <div className="space-y-1">
                             <div className="relative group">
-                                <div className="absolute top-0 bottom-0 right-4 flex items-center justify-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                                </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     {...register("password")}
-                                    className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] tracking-widest font-sans"
+                                    className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] tracking-widest font-sans"
                                     placeholder="••••••••"
                                 />
                                 <button

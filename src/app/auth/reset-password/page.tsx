@@ -74,13 +74,10 @@ function ResetPasswordForm() {
             {/* Password Input */}
             <div className="space-y-1">
                 <div className="relative group">
-                    <div className="absolute top-0 bottom-0 right-4 flex items-center justify-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                    </div>
                     <input
                         type={showPassword ? "text" : "password"}
                         {...register("password")}
-                        className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] text-sm font-sans tracking-widest"
+                        className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] text-sm font-sans tracking-widest"
                         placeholder="كلمة المرور الجديدة"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute top-0 bottom-0 left-4 flex items-center text-xs text-slate-500 hover:text-blue-400 transition-colors">{showPassword ? "إخفاء" : "إظهار"}</button>
@@ -95,13 +92,10 @@ function ResetPasswordForm() {
             {/* Confirm Password Input */}
             <div className="space-y-1">
                 <div className="relative group">
-                    <div className="absolute top-0 bottom-0 right-4 flex items-center justify-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>
-                    </div>
                     <input
                         type={showConfirmPassword ? "text" : "password"}
                         {...register("confirmPassword")}
-                        className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] text-sm font-sans tracking-widest"
+                        className="w-full h-14 bg-slate-950/50 border border-slate-800 rounded-2xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] text-sm font-sans tracking-widest"
                         placeholder="تأكيد كلمة المرور"
                     />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute top-0 bottom-0 left-4 flex items-center text-xs text-slate-500 hover:text-blue-400 transition-colors">{showConfirmPassword ? "إخفاء" : "إظهار"}</button>
