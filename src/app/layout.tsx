@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import MobileNav from "@/components/MobileNav";
 import AuthProvider from "@/components/AuthProvider";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://souqah.sa'),
@@ -93,6 +94,7 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             {children}
+            <ThemeToggle />
             <MobileNav />
           </ThemeProvider>
         </AuthProvider>
