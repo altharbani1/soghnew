@@ -34,32 +34,6 @@
 
 
 
---color-secondary: var(--secondary);
---color-accent: var(--accent);
---color-background: var(--background);
---color-background-secondary: var(--background-secondary);
---color-foreground: var(--foreground);
---color-foreground-muted: var(--foreground-muted);
---color-border: var(--border);
---font-arabic: 'IBM Plex Sans Arabic',
-sans-serif;
-
-
-/* Dark mode support */
-
-/* Light mode (default) */
-
---primary: #2563eb;
---primary-dark: #1d4ed8;
---primary-light: #3b82f6;
---background: #ffffff;
---foreground: #0f172a;
---border: #e2e8f0;
---background-secondary: #f8fafc;
---foreground-muted: #64748b;
-}
-
-/* Dark mode overrides */
 .dark {
   --primary: #3b82f6;
   --primary-dark: #2563eb;
