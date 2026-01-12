@@ -1,37 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/db"
+import { RegisterSchema } from "@/lib/validations/auth"
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { name, email, phone, password } = body
 
-        // Validation
-        if (!name || !email || !phone || !password) {
+        // Server-side validation using Zod
+        const result = RegisterSchema.safeParse(body);
+
+        if (!result.success) {
             return NextResponse.json(
-                { error: "جميع الحقول مطلوبة" },
+                { error: result.error.issues[0].message },
                 { status: 400 }
-            )
+            );
         }
 
-        // Validate phone format (Saudi format)
-        const phoneRegex = /^05[0-9]{8}$/
-        if (!phoneRegex.test(phone)) {
-            return NextResponse.json(
-                { error: "رقم الجوال غير صحيح" },
-                { status: 400 }
-            )
-        }
-
-        // Validate email format
-        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-        if (!emailRegex.test(email)) {
-            return NextResponse.json(
-                { error: "البريد الإلكتروني غير صحيح" },
-                { status: 400 }
-            )
-        }
+        const { name, email, phone, password } = result.data
 
         // Check if phone already exists
         const existingPhone = await prisma.user.findUnique({
@@ -67,6 +53,8 @@ export async function POST(request: NextRequest) {
                 email,
                 phone,
                 password: hashedPassword,
+                // Add default empty badges array if not present in schema default
+                badges: [],
             },
             select: {
                 id: true,
@@ -85,7 +73,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Registration error:", error)
         return NextResponse.json(
-            { error: `فشل التسجيل: ${error instanceof Error ? error.message : "خطأ غير معروف"}` },
+            { error: "حدث خطأ غير متوقع أثناء التسجيل" },
             { status: 500 }
         )
     }

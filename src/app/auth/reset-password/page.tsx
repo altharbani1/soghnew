@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { ResetPasswordSchema } from "@/lib/validations/auth";
+import { PasswordStrength } from "@/components/auth/PasswordStrength";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthInput from "@/components/auth/AuthInput";
@@ -10,19 +15,22 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
 
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (password !== confirmPassword) {
-            setError("كلمات المرور غير متطابقة");
-            return;
-        }
+    const form = useForm<z.infer<typeof ResetPasswordSchema>>({
+        resolver: zodResolver(ResetPasswordSchema),
+        defaultValues: {
+            password: "",
+            confirmPassword: "",
+        },
+    });
 
+    const { register, handleSubmit, formState: { errors, isValid }, watch } = form;
+    const password = watch("password");
+
+    const onSubmit = async (values: z.infer<typeof ResetPasswordSchema>) => {
         setIsLoading(true);
         setError("");
         setMessage("");
@@ -31,7 +39,7 @@ function ResetPasswordForm() {
             const res = await fetch("/api/auth/reset-password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, password }),
+                body: JSON.stringify({ token, password: values.password }),
             });
 
             const data = await res.json();
@@ -61,31 +69,30 @@ function ResetPasswordForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <AuthInput
-                label="كلمة المرور الجديدة"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
-            />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+                <AuthInput
+                    label="كلمة المرور الجديدة"
+                    type="password"
+                    {...register("password")}
+                    error={errors.password?.message}
+                    placeholder="••••••••"
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+                />
+                <PasswordStrength password={password} />
+            </div>
 
             <AuthInput
                 label="تأكيد كلمة المرور"
-                name="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
+                {...register("confirmPassword")}
+                error={errors.confirmPassword?.message}
                 placeholder="••••••••"
                 icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>}
             />
 
             {error && (
-                <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100">
+                <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100 animate-shake">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                     {error}
                 </div>
@@ -100,7 +107,7 @@ function ResetPasswordForm() {
 
             <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isValid}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isLoading ? "جاري التحديث..." : "تغيير كلمة المرور"}

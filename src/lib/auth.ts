@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/db"
+import { LoginSchema } from "@/lib/validations/auth"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
@@ -13,12 +14,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 email: { label: "البريد الإلكتروني", type: "email" }
             },
             async authorize(credentials) {
-                const identifier = (credentials?.phone || credentials?.email) as string;
-                const password = credentials?.password as string;
+                const parsedCredentials = LoginSchema.safeParse(credentials);
 
-                if (!identifier || !password) {
-                    throw new Error("يرجى إدخال بيانات الدخول")
+                if (!parsedCredentials.success) {
+                    throw new Error("يرجى إدخال بيانات الدخول الصحيحة");
                 }
+
+                const { identifier, password } = parsedCredentials.data;
 
                 const user = await prisma.user.findFirst({
                     where: {

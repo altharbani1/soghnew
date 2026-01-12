@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { LoginSchema } from "@/lib/validations/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -11,27 +15,26 @@ export default function LoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-    const [formData, setFormData] = useState({
-        identifier: "",
-        password: "",
+
+    const form = useForm<z.infer<typeof LoginSchema>>({
+        resolver: zodResolver(LoginSchema),
+        defaultValues: {
+            identifier: "",
+            password: "",
+        },
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setError("");
-    };
+    const { register, handleSubmit, formState: { errors, isValid } } = form;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (values: z.infer<typeof LoginSchema>) => {
         setIsLoading(true);
         setError("");
 
         try {
             const result = await signIn("credentials", {
-                phone: formData.identifier,
-                email: formData.identifier,
-                password: formData.password,
+                phone: values.identifier,
+                email: values.identifier,
+                password: values.password,
                 redirect: false,
             });
 
@@ -53,15 +56,12 @@ export default function LoginPage() {
             title="مرحباً بعودتك"
             subtitle="سجل دخولك للمتابعة إلى حسابك"
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <AuthInput
                     label="البريد الإلكتروني أو الجوال"
-                    name="identifier"
-                    type="text"
-                    value={formData.identifier}
-                    onChange={handleChange}
+                    {...register("identifier")}
+                    error={errors.identifier?.message}
                     placeholder="name@example.com"
-                    required
                     dir="ltr"
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -71,12 +71,10 @@ export default function LoginPage() {
                 <div className="space-y-2">
                     <AuthInput
                         label="كلمة المرور"
-                        name="password"
                         type="password"
-                        value={formData.password}
-                        onChange={handleChange}
+                        {...register("password")}
+                        error={errors.password?.message}
                         placeholder="••••••••"
-                        required
                         icon={
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                         }
@@ -92,7 +90,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                    <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100">
+                    <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 border border-red-100 animate-shake">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                         {error}
                     </div>
@@ -100,7 +98,7 @@ export default function LoginPage() {
 
                 <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || !isValid}
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isLoading ? (

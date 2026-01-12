@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { RegisterSchema } from "@/lib/validations/auth";
+import { PasswordStrength } from "@/components/auth/PasswordStrength";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -12,40 +17,25 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        password: "",
-        confirmPassword: "",
+
+    const form = useForm<z.infer<typeof RegisterSchema>>({
+        resolver: zodResolver(RegisterSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            phone: "",
+            password: "",
+            confirmPassword: "",
+            terms: false,
+        },
+        mode: "onChange",
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+    const { register, handleSubmit, formState: { errors, isValid }, watch } = form;
+    const password = watch("password");
+
+    const onSubmit = async (values: z.infer<typeof RegisterSchema>) => {
         setError("");
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-
-        if (formData.password !== formData.confirmPassword) {
-            setError("كلمة المرور غير متطابقة!");
-            return;
-        }
-
-        const phoneRegex = /^05[0-9]{8}$/;
-        if (!phoneRegex.test(formData.phone)) {
-            setError("رقم الجوال غير صحيح (يجب أن يبدأ بـ 05)");
-            return;
-        }
-
-        if (formData.password.length < 6) {
-            setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-            return;
-        }
-
         setIsLoading(true);
 
         try {
@@ -53,10 +43,10 @@ export default function RegisterPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    password: formData.password,
+                    name: values.name,
+                    email: values.email,
+                    phone: values.phone,
+                    password: values.password,
                 }),
             });
 
@@ -70,9 +60,10 @@ export default function RegisterPage() {
 
             setSuccess(true);
 
+            // Auto login after registration
             const loginResult = await signIn("credentials", {
-                phone: formData.phone,
-                password: formData.password,
+                phone: values.phone,
+                password: values.password,
                 redirect: false,
             });
 
@@ -93,74 +84,68 @@ export default function RegisterPage() {
             title="حساب جديد"
             subtitle="أنشئ حسابك وابدأ رحلتك في سوقه"
         >
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <AuthInput
                     label="الاسم الكامل"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
+                    {...register("name")}
+                    error={errors.name?.message}
                     placeholder="الاسم الثلاثي"
-                    required
                     icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
                 />
 
                 <AuthInput
                     label="البريد الإلكتروني"
-                    name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                    {...register("email")}
+                    error={errors.email?.message}
                     placeholder="name@example.com"
-                    required
                     dir="ltr"
                     icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>}
                 />
 
                 <AuthInput
                     label="رقم الجوال"
-                    name="phone"
                     type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
+                    {...register("phone")}
+                    error={errors.phone?.message}
                     placeholder="05xxxxxxxx"
-                    required
                     dir="ltr"
                     maxLength={10}
                     icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <AuthInput
-                        label="كلمة المرور"
-                        name="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="••••••••"
-                        required
-                        icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
-                    />
+                    <div>
+                        <AuthInput
+                            label="كلمة المرور"
+                            type="password"
+                            {...register("password")}
+                            error={errors.password?.message}
+                            placeholder="••••••••"
+                            icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+                        />
+                        <PasswordStrength password={password} />
+                    </div>
                     <AuthInput
                         label="تأكيد كلمة المرور"
-                        name="confirmPassword"
                         type="password"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
+                        {...register("confirmPassword")}
+                        error={errors.confirmPassword?.message}
                         placeholder="••••••••"
-                        required
                         icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>}
                     />
                 </div>
 
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-start gap-2 mt-2">
                     <input
                         id="terms"
                         type="checkbox"
-                        required
-                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        {...register("terms")}
+                        className="w-4 h-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
-                    <label htmlFor="terms" className="text-sm text-gray-500">
+                    <label htmlFor="terms" className="text-sm text-gray-500 leading-tight">
                         أوافق على <Link href="/terms" className="text-indigo-600 hover:underline">الشروط والأحكام</Link> و <Link href="/privacy" className="text-indigo-600 hover:underline">سياسة الخصوصية</Link>
+                        {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms.message}</p>}
                     </label>
                 </div>
 
@@ -173,7 +158,7 @@ export default function RegisterPage() {
 
                 <button
                     type="submit"
-                    disabled={isLoading || success}
+                    disabled={isLoading || success || !isValid}
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
                 >
                     {isLoading ? "جاري الإنشاء..." : "إنشاء حساب"}
