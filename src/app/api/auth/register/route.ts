@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/db"
 import { RegisterSchema } from "@/lib/validations/auth"
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
     try {
+        // Rate limiting - 5 registrations per 15 minutes per IP
+        const clientIP = getClientIP(request);
+        const rateLimitResult = checkRateLimit(
+            `register:${clientIP}`,
+            RATE_LIMITS.AUTH
+        );
+
+        if (!rateLimitResult.allowed) {
+            return NextResponse.json(
+                { error: "لقد تجاوزت الحد المسموح. يرجى المحاولة لاحقاً" },
+                { status: 429 }
+            );
+        }
         const body = await request.json()
 
         // Server-side validation using Zod

@@ -2,8 +2,22 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/mail";
 import { randomBytes } from "crypto";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
+    // Rate limiting - 3 password reset requests per hour per IP
+    const clientIP = getClientIP(req);
+    const rateLimitResult = checkRateLimit(
+        `password-reset:${clientIP}`,
+        RATE_LIMITS.PASSWORD_RESET
+    );
+
+    if (!rateLimitResult.allowed) {
+        return NextResponse.json(
+            { error: "لقد تجاوزت الحد المسموح. يرجى المحاولة لاحقاً" },
+            { status: 429 }
+        );
+    }
     try {
         const { email } = await req.json();
 

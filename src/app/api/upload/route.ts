@@ -1,15 +1,43 @@
 import { NextRequest, NextResponse } from "next/server"
 import { v2 as cloudinary } from "cloudinary"
+import { auth } from "@/lib/auth"
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit"
 
-// Configure Cloudinary
+// Configure Cloudinary - All values from environment variables (required)
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "detddvxt1",
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
 export async function POST(request: NextRequest) {
     try {
+        // Authentication check - only logged-in users can upload
+        const session = await auth()
+
+        if (!session?.user?.id) {
+            return NextResponse.json(
+                { error: "يجب تسجيل الدخول لرفع الصور" },
+                { status: 401 }
+            )
+        }
+
+        // Rate limiting - 10 uploads per minute per user
+        const rateLimitResult = checkRateLimit(
+            `upload:${session.user.id}`,
+            RATE_LIMITS.UPLOAD
+        )
+
+        if (!rateLimitResult.allowed) {
+            return NextResponse.json(
+                {
+                    error: "لقد تجاوزت الحد المسموح لرفع الصور. يرجى المحاولة لاحقاً",
+                    retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+                },
+                { status: 429 }
+            )
+        }
+
         const formData = await request.formData()
         const file = formData.get("file") as File | null
 
