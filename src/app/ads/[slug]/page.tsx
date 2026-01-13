@@ -167,7 +167,7 @@ export default async function AdDetailPage({ params }: Props) {
         user: {
             id: ad.user.id,
             name: ad.user.name,
-            phone: ad.user.phone,
+            phone: ad.user.phone || "",
             avatar: ad.user.avatar,
             rating: ad.user.rating,
             totalReviews: ad.user.totalReviews
